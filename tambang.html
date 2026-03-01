@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tarik Tambang Suara - Game Islami</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  @keyframes geometricBg{0%{background-position:0 0}100%{background-position:60px 60px}}
+  body{
+    font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;
+    background:linear-gradient(135deg,#0D3B0D 0%,#1B5E20 40%,#2E7D32 70%,#1B5E20 100%);
+    min-height:100vh;overflow-x:hidden;color:#fff;
+    background-size:cover;
+  }
+  body::before{
+    content:'';position:fixed;inset:0;opacity:.04;pointer-events:none;z-index:0;
+    background-image:
+      repeating-linear-gradient(0deg,transparent,transparent 28px,rgba(255,215,0,.3) 28px,rgba(255,215,0,.3) 30px),
+      repeating-linear-gradient(90deg,transparent,transparent 28px,rgba(255,215,0,.3) 28px,rgba(255,215,0,.3) 30px);
+    animation:geometricBg 4s linear infinite;
+  }
+  .container{max-width:1100px;margin:0 auto;padding:10px 16px;position:relative;z-index:1}
+
+  /* Header */
+  .header{text-align:center;padding:14px 0 6px}
+  .header h1{
+    font-size:2.4em;font-weight:800;
+    background:linear-gradient(180deg,#FFD700 0%,#FFC107 50%,#FF8F00 100%);
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+    text-shadow:none;filter:drop-shadow(0 2px 4px rgba(0,0,0,.4));
+    letter-spacing:1px;
+  }
+  .header p{color:#A5D6A7;font-size:.9em;margin-top:2px}
+
+  /* Score Bar */
+  .score-bar{
+    background:rgba(0,0,0,.35);border-radius:14px;padding:12px 20px;margin:8px 0;
+    border:1px solid rgba(255,215,0,.2);
+  }
+  .score-bar .track{
+    height:28px;background:rgba(255,255,255,.1);border-radius:14px;position:relative;overflow:hidden;
+    border:1px solid rgba(255,255,255,.15);
+  }
+  .score-bar .track::before,.score-bar .track::after{
+    position:absolute;top:50%;transform:translateY(-50%);font-size:.7em;font-weight:700;z-index:2;
+  }
+  .score-bar .track::before{content:'◀ SUBHANALLAH';left:10px;color:#81D4FA}
+  .score-bar .track::after{content:'ALHAMDULILLAH ▶';right:10px;color:#FFD740}
+  .score-bar .fill-left{
+    position:absolute;right:50%;top:0;height:100%;background:linear-gradient(90deg,#1565C0,#42A5F5);
+    border-radius:14px 0 0 14px;transition:width .4s ease;width:0;
+  }
+  .score-bar .fill-right{
+    position:absolute;left:50%;top:0;height:100%;background:linear-gradient(90deg,#F9A825,#FFD740);
+    border-radius:0 14px 14px 0;transition:width .4s ease;width:0;
+  }
+  .score-bar .marker{
+    position:absolute;top:-2px;bottom:-2px;width:4px;background:#fff;
+    left:50%;transform:translateX(-50%);z-index:3;border-radius:2px;
+    box-shadow:0 0 8px rgba(255,255,255,.6);transition:left .4s ease;
+  }
+  .score-labels{display:flex;justify-content:space-between;margin-top:6px;font-size:.8em;color:#A5D6A7}
+
+  /* Turn Banner */
+  .turn-banner{
+    text-align:center;margin:8px 0;padding:14px 20px;border-radius:14px;
+    font-size:1.5em;font-weight:800;letter-spacing:1px;
+    transition:all .3s ease;min-height:60px;
+    display:flex;align-items:center;justify-content:center;gap:12px;
+    background:rgba(0,0,0,.3);border:2px solid rgba(255,255,255,.1);color:#A5D6A7;
+  }
+  .turn-banner.team-left-turn{
+    background:linear-gradient(135deg,rgba(21,101,192,.4),rgba(66,165,245,.2));
+    border-color:rgba(66,165,245,.5);color:#64B5F6;
+    animation:glowLeft 1s ease-in-out infinite alternate;
+  }
+  .turn-banner.team-right-turn{
+    background:linear-gradient(135deg,rgba(249,168,37,.2),rgba(255,215,64,.4));
+    border-color:rgba(255,215,64,.5);color:#FFD740;
+    animation:glowRight 1s ease-in-out infinite alternate;
+  }
+  .turn-banner.countdown-phase{
+    background:rgba(0,0,0,.5);border-color:rgba(255,255,255,.3);color:#fff;
+    font-size:2em;
+  }
+  @keyframes glowLeft{from{box-shadow:0 0 15px rgba(66,165,245,.2)}to{box-shadow:0 0 30px rgba(66,165,245,.4)}}
+  @keyframes glowRight{from{box-shadow:0 0 15px rgba(255,215,64,.2)}to{box-shadow:0 0 30px rgba(255,215,64,.4)}}
+
+  /* Volume Meter */
+  .volume-section{
+    display:flex;gap:14px;align-items:center;margin:8px 0;
+  }
+  .vol-meter{
+    flex:1;background:rgba(0,0,0,.35);border-radius:12px;padding:10px 16px;
+    border:1px solid rgba(255,255,255,.1);
+  }
+  .vol-meter .vol-label{font-size:.75em;color:#A5D6A7;margin-bottom:5px;text-align:center}
+  .vol-meter .vol-track{
+    height:22px;background:rgba(255,255,255,.08);border-radius:11px;overflow:hidden;
+    position:relative;
+  }
+  .vol-meter .vol-fill{
+    height:100%;border-radius:11px;transition:width .05s linear;width:0;
+  }
+  .vol-meter.left-meter .vol-fill{background:linear-gradient(90deg,#1565C0,#42A5F5,#64B5F6)}
+  .vol-meter.right-meter .vol-fill{background:linear-gradient(90deg,#F9A825,#FFD740,#FFEE58)}
+  .vol-meter .vol-value{
+    position:absolute;right:8px;top:50%;transform:translateY(-50%);
+    font-size:.7em;font-weight:700;color:rgba(255,255,255,.8);
+  }
+  .vol-meter.inactive{opacity:.35}
+
+  /* Game Area */
+  .game-area{
+    background:linear-gradient(180deg,rgba(0,0,0,.15) 0%,rgba(0,0,0,.3) 100%);
+    border-radius:18px;padding:16px 10px 10px;margin:8px 0;
+    border:1px solid rgba(255,215,0,.15);position:relative;overflow:hidden;
+    min-height:260px;
+  }
+  .game-scene{
+    display:flex;align-items:flex-end;justify-content:center;
+    transition:transform .4s ease;position:relative;height:230px;
+  }
+  .game-area::after{
+    content:'';position:absolute;bottom:0;left:0;right:0;height:35px;
+    background:linear-gradient(180deg,#33691E,#1B5E20);border-radius:0 0 18px 18px;
+    border-top:3px solid #558B2F;
+  }
+
+  /* Teams */
+  .team{display:flex;align-items:flex-end;gap:2px;z-index:2}
+
+  /* Kid figures */
+  .kid{
+    width:36px;display:flex;flex-direction:column;align-items:center;
+    position:relative;animation:idle 2s ease-in-out infinite;
+    transition:transform .2s ease;
+  }
+  .kid:nth-child(odd){animation-delay:-.5s}
+  .kid:nth-child(3n){animation-delay:-1s}
+  @keyframes idle{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+  @keyframes pullLeft{
+    0%,100%{transform:translateX(0) rotate(0deg)}
+    50%{transform:translateX(-6px) rotate(-8deg)}
+  }
+  @keyframes pullRight{
+    0%,100%{transform:translateX(0) rotate(0deg)}
+    50%{transform:translateX(6px) rotate(8deg)}
+  }
+  .team-left .kid.pulling{animation:pullLeft .3s ease infinite}
+  .team-right .kid.pulling{animation:pullRight .3s ease infinite}
+
+  .kid-head{width:22px;height:22px;border-radius:50%;position:relative;z-index:1}
+  .team-left .kid-head::before{
+    content:'';position:absolute;top:-6px;left:3px;right:3px;height:10px;
+    background:#1A237E;border-radius:3px 3px 0 0;
+  }
+  .team-right .kid-head::before{
+    content:'';position:absolute;top:-4px;left:-3px;right:-3px;bottom:-2px;
+    border-radius:50% 50% 30% 30%;z-index:-1;
+  }
+  .kid-body{width:18px;height:28px;border-radius:4px 4px 0 0;margin-top:-2px;position:relative}
+  .team-left .kid-body::before{
+    content:'';position:absolute;top:4px;right:-6px;width:10px;height:4px;
+    background:inherit;border-radius:2px;transform:rotate(-10deg);
+  }
+  .team-right .kid-body::before{
+    content:'';position:absolute;top:4px;left:-6px;width:10px;height:4px;
+    background:inherit;border-radius:2px;transform:rotate(10deg);
+  }
+  .kid-legs{display:flex;gap:3px;margin-top:-1px}
+  .kid-leg{width:6px;height:14px;border-radius:0 0 3px 3px}
+
+  .kid:nth-child(1) .kid-head{background:#FFCC80}.kid:nth-child(1) .kid-body{background:#E53935}.kid:nth-child(1) .kid-leg{background:#1565C0}
+  .kid:nth-child(2) .kid-head{background:#FFAB91}.kid:nth-child(2) .kid-body{background:#1E88E5}.kid:nth-child(2) .kid-leg{background:#424242}
+  .kid:nth-child(3) .kid-head{background:#D7CCC8}.kid:nth-child(3) .kid-body{background:#43A047}.kid:nth-child(3) .kid-leg{background:#5D4037}
+  .kid:nth-child(4) .kid-head{background:#FFCC80}.kid:nth-child(4) .kid-body{background:#FB8C00}.kid:nth-child(4) .kid-leg{background:#1565C0}
+  .kid:nth-child(5) .kid-head{background:#FFAB91}.kid:nth-child(5) .kid-body{background:#8E24AA}.kid:nth-child(5) .kid-leg{background:#37474F}
+  .kid:nth-child(6) .kid-head{background:#D7CCC8}.kid:nth-child(6) .kid-body{background:#00897B}.kid:nth-child(6) .kid-leg{background:#4E342E}
+  .kid:nth-child(7) .kid-head{background:#FFCC80}.kid:nth-child(7) .kid-body{background:#D81B60}.kid:nth-child(7) .kid-leg{background:#1565C0}
+  .kid:nth-child(8) .kid-head{background:#FFAB91}.kid:nth-child(8) .kid-body{background:#039BE5}.kid:nth-child(8) .kid-leg{background:#424242}
+  .kid:nth-child(9) .kid-head{background:#D7CCC8}.kid:nth-child(9) .kid-body{background:#7CB342}.kid:nth-child(9) .kid-leg{background:#5D4037}
+  .kid:nth-child(10) .kid-head{background:#FFCC80}.kid:nth-child(10) .kid-body{background:#F4511E}.kid:nth-child(10) .kid-leg{background:#37474F}
+  .team-right .kid-head::before{background:inherit;filter:brightness(.8)}
+
+  /* Rope */
+  .rope-section{
+    display:flex;flex-direction:column;align-items:center;z-index:3;
+    margin:0 4px;position:relative;
+  }
+  .flag{
+    width:36px;height:28px;background:linear-gradient(135deg,#FFD700,#FFC107);
+    position:relative;margin-bottom:-2px;clip-path:polygon(0 0,100% 0,100% 70%,50% 100%,0 70%);
+    box-shadow:0 2px 8px rgba(255,215,0,.4);
+    display:flex;align-items:center;justify-content:center;
+  }
+  .flag::after{content:'☪';font-size:14px;color:#1B5E20;margin-top:-4px}
+  .rope{
+    width:100%;height:8px;background:repeating-linear-gradient(90deg,#8D6E63 0px,#A1887F 4px,#6D4C41 8px);
+    border-radius:4px;position:relative;min-width:60px;
+    box-shadow:0 2px 4px rgba(0,0,0,.3);align-self:flex-end;margin-bottom:30px;
+  }
+  .rope-left,.rope-right{
+    position:absolute;top:50%;transform:translateY(-50%);height:8px;width:80px;
+    background:repeating-linear-gradient(90deg,#8D6E63 0px,#A1887F 4px,#6D4C41 8px);
+  }
+  .rope-left{right:100%}
+  .rope-right{left:100%}
+
+  /* Controls */
+  .controls{
+    display:flex;gap:12px;justify-content:center;align-items:center;
+    flex-wrap:wrap;margin:8px 0;
+  }
+  .btn{
+    padding:12px 32px;border:none;border-radius:10px;font-size:1.05em;
+    font-weight:700;cursor:pointer;transition:all .2s;text-transform:uppercase;
+    letter-spacing:1px;
+  }
+  .btn:active{transform:scale(.96)}
+  .btn-start{
+    background:linear-gradient(135deg,#FFD700,#FFC107);color:#1B5E20;
+    box-shadow:0 4px 15px rgba(255,215,0,.3);
+  }
+  .btn-start:hover{box-shadow:0 6px 20px rgba(255,215,0,.5)}
+  .btn-start:disabled{opacity:.5;cursor:not-allowed}
+  .btn-reset{
+    background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3);
+  }
+  .btn-reset:hover{background:rgba(255,255,255,.25)}
+  .mic-status{
+    display:flex;align-items:center;gap:8px;padding:8px 18px;
+    border-radius:10px;background:rgba(0,0,0,.3);font-size:.9em;
+  }
+  .mic-dot{width:12px;height:12px;border-radius:50%;background:#666;transition:background .3s}
+  .mic-dot.active{background:#4CAF50;box-shadow:0 0 8px #4CAF50;animation:pulse 1.5s infinite}
+  .mic-dot.error{background:#f44336}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+
+  /* Instructions */
+  .instructions{
+    background:rgba(0,0,0,.25);border-radius:14px;padding:14px 20px;margin:8px 0;
+    border:1px solid rgba(255,215,0,.1);
+  }
+  .instructions h3{color:#FFD740;font-size:.95em;margin-bottom:8px;text-align:center}
+  .inst-text{font-size:.85em;color:#C8E6C9;text-align:center;line-height:1.6}
+
+  /* Winner Overlay */
+  .overlay{
+    display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);
+    z-index:100;align-items:center;justify-content:center;
+  }
+  .overlay.show{display:flex}
+  .winner-box{
+    background:linear-gradient(135deg,#1B5E20,#2E7D32);
+    border-radius:24px;padding:40px 50px;text-align:center;
+    border:3px solid #FFD700;box-shadow:0 0 60px rgba(255,215,0,.3);
+    animation:popIn .5s ease;max-width:500px;
+  }
+  @keyframes popIn{0%{transform:scale(.5);opacity:0}100%{transform:scale(1);opacity:1}}
+  .winner-box h2{
+    font-size:2.2em;
+    background:linear-gradient(180deg,#FFD700,#FF8F00);
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+    margin-bottom:8px;
+  }
+  .winner-box .winner-team{font-size:1.3em;color:#E8F5E9;margin-bottom:20px}
+  .winner-box .btn{margin-top:10px}
+
+  @keyframes confetti{
+    0%{transform:translateY(-10px) rotate(0deg);opacity:1}
+    100%{transform:translateY(100vh) rotate(720deg);opacity:0}
+  }
+  .confetti-piece{
+    position:fixed;width:10px;height:10px;top:-10px;z-index:101;
+    animation:confetti 3s ease-in forwards;
+  }
+
+  /* Setup Overlay */
+  .setup-overlay{
+    display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);
+    z-index:100;align-items:center;justify-content:center;
+  }
+  .setup-overlay.show{display:flex}
+  .setup-box{
+    background:linear-gradient(135deg,#1B5E20,#2E7D32);
+    border-radius:24px;padding:36px 44px;text-align:center;
+    border:3px solid #FFD700;box-shadow:0 0 60px rgba(255,215,0,.3);
+    animation:popIn .4s ease;max-width:420px;width:90%;
+  }
+  .setup-box h2{
+    font-size:1.6em;color:#FFD740;margin-bottom:6px;
+  }
+  .setup-box p{color:#C8E6C9;font-size:.9em;margin-bottom:20px}
+  .round-options{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-bottom:20px}
+  .round-btn{
+    width:70px;height:70px;border-radius:16px;border:2px solid rgba(255,215,0,.3);
+    background:rgba(255,255,255,.08);color:#fff;font-size:1.8em;font-weight:800;
+    cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;
+  }
+  .round-btn:hover{background:rgba(255,215,0,.2);border-color:#FFD700;transform:scale(1.08)}
+  .round-btn:active{transform:scale(.95)}
+  .round-btn .round-label{font-size:.35em;font-weight:600;color:#A5D6A7;display:block;margin-top:2px}
+  .setup-cancel{
+    background:none;border:none;color:#A5D6A7;font-size:.85em;cursor:pointer;
+    text-decoration:underline;margin-top:4px;
+  }
+  .setup-cancel:hover{color:#fff}
+
+  /* Round Counter */
+  .round-counter{
+    text-align:center;font-size:.85em;color:#A5D6A7;margin-bottom:4px;
+    font-weight:600;letter-spacing:.5px;display:none;
+  }
+  .round-counter.show{display:block}
+  .round-counter span{color:#FFD740}
+
+  @media(max-width:700px){
+    .header h1{font-size:1.8em}
+    .kid{width:28px}
+    .kid-head{width:18px;height:18px}
+    .kid-body{width:14px;height:22px}
+    .kid-leg{width:5px;height:11px}
+    .game-scene{height:200px}
+    .btn{padding:10px 22px;font-size:.9em}
+    .turn-banner{font-size:1.2em;padding:10px 14px}
+    .volume-section{flex-direction:column;gap:6px}
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <h1>Tarik Tambang Suara</h1>
+    <p>Bergiliran teriak sekencang-kencangnya!</p>
+  </div>
+
+  <!-- Score Bar -->
+  <div class="score-bar">
+    <div class="track">
+      <div class="fill-left" id="fillLeft"></div>
+      <div class="fill-right" id="fillRight"></div>
+      <div class="marker" id="marker"></div>
+    </div>
+    <div class="score-labels">
+      <span>Tim Subhanallah</span>
+      <span id="scoreText">0%</span>
+      <span>Tim Alhamdulillah</span>
+    </div>
+  </div>
+
+  <!-- Round Counter -->
+  <div class="round-counter" id="roundCounter">Ronde <span id="roundCurrent">1</span> / <span id="roundTotal">5</span></div>
+
+  <!-- Turn Banner -->
+  <div class="turn-banner" id="turnBanner">Tekan "Mulai" untuk bermain</div>
+
+  <!-- Volume Meters -->
+  <div class="volume-section">
+    <div class="vol-meter left-meter inactive" id="volLeft">
+      <div class="vol-label">Tim Subhanallah</div>
+      <div class="vol-track">
+        <div class="vol-fill" id="volFillLeft"></div>
+        <div class="vol-value" id="volValLeft">0%</div>
+      </div>
+    </div>
+    <div class="vol-meter right-meter inactive" id="volRight">
+      <div class="vol-label">Tim Alhamdulillah</div>
+      <div class="vol-track">
+        <div class="vol-fill" id="volFillRight"></div>
+        <div class="vol-value" id="volValRight">0%</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Game Area -->
+  <div class="game-area">
+    <div class="game-scene" id="gameScene">
+      <div class="team team-left" id="teamLeft"></div>
+      <div class="rope-section">
+        <div class="flag"></div>
+        <div class="rope">
+          <div class="rope-left"></div>
+          <div class="rope-right"></div>
+        </div>
+      </div>
+      <div class="team team-right" id="teamRight"></div>
+    </div>
+  </div>
+
+  <!-- Controls -->
+  <div class="controls">
+    <button class="btn btn-start" id="btnStart" onclick="startGame()">Mulai</button>
+    <button class="btn btn-reset" onclick="resetGame()">Ulangi</button>
+    <div class="mic-status">
+      <div class="mic-dot" id="micDot"></div>
+      <span id="micLabel">Mikrofon mati</span>
+    </div>
+  </div>
+
+  <!-- Instructions -->
+  <div class="instructions">
+    <h3>Cara Bermain</h3>
+    <div class="inst-text">
+      Pilih jumlah ronde, lalu kedua tim bergantian teriak selama 3 detik.<br>
+      Tim kiri teriak <strong>"Subhanallah"</strong>, tim kanan teriak <strong>"Alhamdulillah"</strong>.<br>
+      Kata harus benar — kata salah tidak dihitung! Semakin keras, semakin kuat tarikannya!<br>
+      Setelah semua ronde selesai, tim yang talinya condong ke arahnya menang!
+    </div>
+  </div>
+</div>
+
+<!-- Setup Overlay -->
+<div class="setup-overlay" id="setupOverlay">
+  <div class="setup-box">
+    <h2>Pilih Jumlah Ronde</h2>
+    <p>Setiap ronde, kedua tim bergantian teriak.<br>Pemenang ditentukan di akhir semua ronde!</p>
+    <div class="round-options">
+      <button class="round-btn" onclick="confirmStart(3)">3</button>
+      <button class="round-btn" onclick="confirmStart(5)">5</button>
+      <button class="round-btn" onclick="confirmStart(7)">7</button>
+      <button class="round-btn" onclick="confirmStart(10)">10</button>
+    </div>
+    <button class="setup-cancel" onclick="cancelSetup()">Batal</button>
+  </div>
+</div>
+
+<!-- Winner Overlay -->
+<div class="overlay" id="overlay">
+  <div class="winner-box">
+    <h2 id="winnerTitle">Pemenang!</h2>
+    <div class="winner-team" id="winnerTeam"></div>
+    <div class="winner-detail" id="winnerDetail" style="font-size:.9em;color:#A5D6A7;margin-bottom:16px"></div>
+    <button class="btn btn-start" onclick="resetGame()">Main Lagi</button>
+  </div>
+</div>
+
+<script>
+(function() {
+  // --- Config ---
+  const KIDS_PER_TEAM = 10;
+  const ROUND_DURATION = 3000;   // 3s per team's turn
+  const PAUSE_DURATION = 1500;   // 1.5s pause between turns
+  const COUNTDOWN_STEPS = 3;     // 3-2-1 countdown before game
+  // Volume → rope shift: at max volume (100%) shift this much per turn
+  const MAX_SHIFT_PER_TURN = 15;
+  // Minimum volume % to count as a valid shout (filters ambient noise)
+  const VOLUME_NOISE_FLOOR = 8;
+
+  // --- State ---
+  let ropePos = 0;
+  let gameRunning = false;
+  let audioCtx = null;
+  let analyser = null;
+  let micStream = null;
+  let animFrameId = null;
+  let roundTimeout = null;
+  let currentTurn = null; // 'left' | 'right' | 'pause' | 'countdown'
+  let roundPeakVolume = 0;
+  let volumeAccumulator = 0;
+  let volumeSamples = 0;
+
+  // Round tracking: 1 round = left turn + right turn
+  let totalRounds = 5;
+  let currentRound = 1;          // Which round we're in (1-based)
+  let turnInRound = 0;           // 0 = left hasn't gone, 1 = left done/right's turn, 2 = both done
+
+  // Speech recognition state
+  let recognition = null;
+  let wordDetected = false;
+
+  // --- DOM ---
+  const gameScene = document.getElementById('gameScene');
+  const fillLeft = document.getElementById('fillLeft');
+  const fillRight = document.getElementById('fillRight');
+  const marker = document.getElementById('marker');
+  const scoreText = document.getElementById('scoreText');
+  const turnBanner = document.getElementById('turnBanner');
+  const micDot = document.getElementById('micDot');
+  const micLabel = document.getElementById('micLabel');
+  const btnStart = document.getElementById('btnStart');
+  const overlay = document.getElementById('overlay');
+  const winnerTeam = document.getElementById('winnerTeam');
+  const teamLeftEl = document.getElementById('teamLeft');
+  const teamRightEl = document.getElementById('teamRight');
+  const volFillLeft = document.getElementById('volFillLeft');
+  const volFillRight = document.getElementById('volFillRight');
+  const volValLeft = document.getElementById('volValLeft');
+  const volValRight = document.getElementById('volValRight');
+  const volLeftMeter = document.getElementById('volLeft');
+  const volRightMeter = document.getElementById('volRight');
+  const setupOverlay = document.getElementById('setupOverlay');
+  const roundCounter = document.getElementById('roundCounter');
+  const roundCurrentEl = document.getElementById('roundCurrent');
+  const roundTotalEl = document.getElementById('roundTotal');
+  const winnerTitle = document.getElementById('winnerTitle');
+  const winnerDetail = document.getElementById('winnerDetail');
+
+  // --- Generate kids ---
+  function createKids() {
+    teamLeftEl.innerHTML = '';
+    teamRightEl.innerHTML = '';
+    for (let i = 0; i < KIDS_PER_TEAM; i++) {
+      teamLeftEl.appendChild(makeKid());
+      teamRightEl.appendChild(makeKid());
+    }
+  }
+  function makeKid() {
+    const kid = document.createElement('div');
+    kid.className = 'kid';
+    kid.innerHTML = '<div class="kid-head"></div><div class="kid-body"></div><div class="kid-legs"><div class="kid-leg"></div><div class="kid-leg"></div></div>';
+    return kid;
+  }
+
+  // --- Visuals ---
+  function updateVisuals() {
+    const sceneShift = ropePos * 1.2;
+    gameScene.style.transform = 'translateX(' + sceneShift + 'px)';
+    const pct = Math.abs(ropePos);
+    if (ropePos < 0) {
+      fillLeft.style.width = (pct / 2) + '%';
+      fillRight.style.width = '0%';
+    } else {
+      fillRight.style.width = (pct / 2) + '%';
+      fillLeft.style.width = '0%';
+    }
+    marker.style.left = (50 + ropePos / 2) + '%';
+    const direction = ropePos < 0 ? '◀ ' : ropePos > 0 ? ' ▶' : '';
+    scoreText.textContent = direction + Math.abs(Math.round(ropePos)) + '%';
+  }
+
+  function triggerPull(side, on) {
+    const team = side === 'left' ? teamLeftEl : teamRightEl;
+    const kids = team.querySelectorAll('.kid');
+    kids.forEach(function(kid) {
+      if (on) {
+        kid.classList.add('pulling');
+      } else {
+        kid.classList.remove('pulling');
+      }
+    });
+  }
+
+  function stopAllPulling() {
+    triggerPull('left', false);
+    triggerPull('right', false);
+  }
+
+  // --- Audio: Web Audio API for real-time volume ---
+  async function initAudio() {
+    try {
+      micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const source = audioCtx.createMediaStreamSource(micStream);
+      analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 512;
+      analyser.smoothingTimeConstant = 0.3;
+      source.connect(analyser);
+      return true;
+    } catch(e) {
+      alert('Tidak bisa mengakses mikrofon. Pastikan izin mikrofon diberikan.');
+      return false;
+    }
+  }
+
+  // --- Speech Recognition (keyword validation only) ---
+  // Runs during each 3s turn to check if the team says the right word.
+  // We don't rely on it for game responsiveness — just a yes/no gate.
+  function initSpeechRecognition() {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) return; // Gracefully degrade — skip word validation
+    recognition = new SR();
+    recognition.lang = 'id-ID';
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.maxAlternatives = 3;
+
+    recognition.onresult = function(event) {
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        for (let j = 0; j < event.results[i].length; j++) {
+          const text = event.results[i][j].transcript.toLowerCase();
+          if (currentTurn === 'left' && hasSubhanallah(text)) {
+            wordDetected = true;
+          } else if (currentTurn === 'right' && hasAlhamdulillah(text)) {
+            wordDetected = true;
+          }
+        }
+      }
+    };
+
+    recognition.onerror = function(event) {
+      if (event.error === 'no-speech' || event.error === 'aborted') return;
+    };
+
+    recognition.onend = function() {
+      // Auto-restart if still in an active round
+      if (gameRunning && (currentTurn === 'left' || currentTurn === 'right')) {
+        try { recognition.start(); } catch(e) {}
+      }
+    };
+  }
+
+  function hasSubhanallah(text) {
+    return text.includes('subhanallah') || text.includes('subhan allah')
+      || text.includes('subhanalloh') || text.includes('subhana');
+  }
+
+  function hasAlhamdulillah(text) {
+    return text.includes('alhamdulillah') || text.includes('alhamdulilloh')
+      || text.includes('hamdulillah') || text.includes('hamdu');
+  }
+
+  function startListening() {
+    wordDetected = false;
+    if (!recognition) return;
+    try { recognition.start(); } catch(e) {}
+  }
+
+  function stopListening() {
+    if (!recognition) return;
+    try { recognition.abort(); } catch(e) {}
+  }
+
+  function getVolume() {
+    if (!analyser) return 0;
+    const data = new Uint8Array(analyser.fftSize);
+    analyser.getByteTimeDomainData(data);
+    // Calculate RMS volume
+    let sum = 0;
+    for (let i = 0; i < data.length; i++) {
+      const val = (data[i] - 128) / 128;
+      sum += val * val;
+    }
+    const rms = Math.sqrt(sum / data.length);
+    // Convert to 0-100 percentage (with some amplification for speech)
+    return Math.min(100, Math.round(rms * 300));
+  }
+
+  // --- Real-time volume display loop (runs at ~60fps) ---
+  function volumeLoop() {
+    if (!gameRunning) return;
+    const vol = getVolume();
+
+    // Update the active team's meter in real-time
+    if (currentTurn === 'left') {
+      volFillLeft.style.width = vol + '%';
+      volValLeft.textContent = vol + '%';
+      // Accumulate for average calculation
+      volumeAccumulator += vol;
+      volumeSamples++;
+      if (vol > roundPeakVolume) roundPeakVolume = vol;
+      // Animate kids pulling intensity based on volume
+      if (vol > VOLUME_NOISE_FLOOR) {
+        triggerPull('left', true);
+      } else {
+        triggerPull('left', false);
+      }
+    } else if (currentTurn === 'right') {
+      volFillRight.style.width = vol + '%';
+      volValRight.textContent = vol + '%';
+      volumeAccumulator += vol;
+      volumeSamples++;
+      if (vol > roundPeakVolume) roundPeakVolume = vol;
+      if (vol > VOLUME_NOISE_FLOOR) {
+        triggerPull('right', true);
+      } else {
+        triggerPull('right', false);
+      }
+    }
+
+    animFrameId = requestAnimationFrame(volumeLoop);
+  }
+
+  // --- Round system ---
+  function updateRoundDisplay() {
+    roundCurrentEl.textContent = currentRound;
+    roundTotalEl.textContent = totalRounds;
+  }
+
+  function startCountdown(step) {
+    if (!gameRunning) return;
+    currentTurn = 'countdown';
+    turnBanner.className = 'turn-banner countdown-phase';
+    roundCounter.classList.add('show');
+    updateRoundDisplay();
+    if (step > 0) {
+      turnBanner.textContent = step;
+      roundTimeout = setTimeout(function() { startCountdown(step - 1); }, 800);
+    } else {
+      turnBanner.textContent = 'MULAI!';
+      roundTimeout = setTimeout(function() { startRound('left'); }, 600);
+    }
+  }
+
+  function startRound(side) {
+    if (!gameRunning) return;
+    currentTurn = side;
+    roundPeakVolume = 0;
+    volumeAccumulator = 0;
+    volumeSamples = 0;
+
+    // Reset both meters
+    volFillLeft.style.width = '0%';
+    volFillRight.style.width = '0%';
+    volValLeft.textContent = '0%';
+    volValRight.textContent = '0%';
+
+    // Start speech recognition to validate the correct word
+    startListening();
+
+    // Highlight active team
+    if (side === 'left') {
+      turnBanner.className = 'turn-banner team-left-turn';
+      turnBanner.innerHTML = 'Teriak <strong>"SUBHANALLAH"</strong> sekarang!';
+      volLeftMeter.classList.remove('inactive');
+      volRightMeter.classList.add('inactive');
+    } else {
+      turnBanner.className = 'turn-banner team-right-turn';
+      turnBanner.innerHTML = 'Teriak <strong>"ALHAMDULILLAH"</strong> sekarang!';
+      volRightMeter.classList.remove('inactive');
+      volLeftMeter.classList.add('inactive');
+    }
+
+    // End this round after ROUND_DURATION
+    roundTimeout = setTimeout(function() { endRound(side); }, ROUND_DURATION);
+  }
+
+  function endRound(side) {
+    if (!gameRunning) return;
+    stopAllPulling();
+    stopListening();
+
+    // Calculate average volume for this turn
+    const avgVolume = volumeSamples > 0 ? volumeAccumulator / volumeSamples : 0;
+    const effectiveVolume = (avgVolume * 0.6) + (roundPeakVolume * 0.4);
+    const volPct = Math.round(effectiveVolume);
+
+    const teamName = side === 'left' ? 'Tim Subhanallah' : 'Tim Alhamdulillah';
+    const keyword = side === 'left' ? 'Subhanallah' : 'Alhamdulillah';
+
+    // Volume only counts if the correct keyword was detected
+    const validated = !recognition || wordDetected;
+
+    if (validated && effectiveVolume > VOLUME_NOISE_FLOOR) {
+      const shiftAmount = (effectiveVolume / 100) * MAX_SHIFT_PER_TURN;
+      if (side === 'left') {
+        ropePos = Math.max(-100, ropePos - shiftAmount);
+      } else {
+        ropePos = Math.min(100, ropePos + shiftAmount);
+      }
+      updateVisuals();
+      turnBanner.className = 'turn-banner';
+      turnBanner.textContent = teamName + ': ' + volPct + '% kekuatan!';
+    } else if (!validated) {
+      turnBanner.className = 'turn-banner';
+      turnBanner.textContent = teamName + ': Kata "' + keyword + '" tidak terdeteksi!';
+    } else {
+      turnBanner.className = 'turn-banner';
+      turnBanner.textContent = teamName + ': Terlalu pelan!';
+    }
+
+    // Track turns within the round
+    turnInRound++;
+
+    if (side === 'left') {
+      // Left just finished → right's turn next
+      currentTurn = 'pause';
+      roundTimeout = setTimeout(function() {
+        startRound('right');
+      }, PAUSE_DURATION);
+    } else {
+      // Right just finished → this round is complete
+      if (currentRound >= totalRounds) {
+        // All rounds done → decide winner by position
+        roundTimeout = setTimeout(function() { decideWinner(); }, PAUSE_DURATION);
+      } else {
+        // More rounds to go
+        currentRound++;
+        turnInRound = 0;
+        currentTurn = 'pause';
+        roundTimeout = setTimeout(function() {
+          updateRoundDisplay();
+          startRound('left');
+        }, PAUSE_DURATION);
+      }
+    }
+  }
+
+  // --- Win ---
+  function decideWinner() {
+    const absPct = Math.abs(Math.round(ropePos));
+    if (ropePos < 0) {
+      endGame('Tim Subhanallah', absPct);
+    } else if (ropePos > 0) {
+      endGame('Tim Alhamdulillah', absPct);
+    } else {
+      endGame(null, 0); // Perfect draw
+    }
+  }
+
+  function endGame(winner, margin) {
+    gameRunning = false;
+    stopAllPulling();
+    stopListening();
+    clearTimeout(roundTimeout);
+    cancelAnimationFrame(animFrameId);
+    currentTurn = null;
+
+    if (winner) {
+      winnerTitle.textContent = 'Pemenang!';
+      winnerTeam.textContent = winner;
+      winnerDetail.textContent = 'Menang dengan selisih ' + margin + '% setelah ' + totalRounds + ' ronde';
+    } else {
+      winnerTitle.textContent = 'Seri!';
+      winnerTeam.textContent = 'Kedua tim seimbang!';
+      winnerDetail.textContent = 'Tidak ada pemenang setelah ' + totalRounds + ' ronde';
+    }
+
+    overlay.classList.add('show');
+    spawnConfetti();
+    micDot.className = 'mic-dot';
+    micLabel.textContent = 'Mikrofon mati';
+  }
+
+  function spawnConfetti() {
+    const colors = ['#FFD700','#4CAF50','#2196F3','#FF5722','#9C27B0','#FFC107','#E91E63'];
+    for (let i = 0; i < 50; i++) {
+      const piece = document.createElement('div');
+      piece.className = 'confetti-piece';
+      piece.style.left = Math.random() * 100 + 'vw';
+      piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+      piece.style.animationDelay = (Math.random() * 2) + 's';
+      piece.style.animationDuration = (2 + Math.random() * 2) + 's';
+      piece.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
+      document.body.appendChild(piece);
+      setTimeout(function() { piece.remove(); }, 5000);
+    }
+  }
+
+  // --- Game controls ---
+
+  // Step 1: Show setup popup to choose rounds
+  window.startGame = function() {
+    if (gameRunning) return;
+    setupOverlay.classList.add('show');
+  };
+
+  // Step 2: User picks round count → init audio → start game
+  window.confirmStart = async function(rounds) {
+    setupOverlay.classList.remove('show');
+    totalRounds = rounds;
+    currentRound = 1;
+    turnInRound = 0;
+    btnStart.disabled = true;
+
+    // Init audio once — mic permission asked only here
+    if (!audioCtx) {
+      const ok = await initAudio();
+      if (!ok) {
+        btnStart.disabled = false;
+        return;
+      }
+    }
+    if (audioCtx.state === 'suspended') {
+      await audioCtx.resume();
+    }
+
+    // Init speech recognition once (for keyword validation)
+    if (!recognition) {
+      initSpeechRecognition();
+    }
+
+    gameRunning = true;
+    ropePos = 0;
+    updateVisuals();
+    micDot.className = 'mic-dot active';
+    micLabel.textContent = 'Mendengarkan...';
+    volLeftMeter.classList.add('inactive');
+    volRightMeter.classList.add('inactive');
+
+    // Start volume loop
+    volumeLoop();
+
+    // Start countdown → then rounds
+    startCountdown(COUNTDOWN_STEPS);
+  };
+
+  window.cancelSetup = function() {
+    setupOverlay.classList.remove('show');
+  };
+
+  window.resetGame = function() {
+    gameRunning = false;
+    clearTimeout(roundTimeout);
+    cancelAnimationFrame(animFrameId);
+    stopAllPulling();
+    stopListening();
+    currentTurn = null;
+    ropePos = 0;
+    currentRound = 1;
+    turnInRound = 0;
+    roundPeakVolume = 0;
+    volumeAccumulator = 0;
+    volumeSamples = 0;
+    updateVisuals();
+    overlay.classList.remove('show');
+    setupOverlay.classList.remove('show');
+    btnStart.disabled = false;
+    turnBanner.className = 'turn-banner';
+    turnBanner.textContent = 'Tekan "Mulai" untuk bermain';
+    roundCounter.classList.remove('show');
+    volFillLeft.style.width = '0%';
+    volFillRight.style.width = '0%';
+    volValLeft.textContent = '0%';
+    volValRight.textContent = '0%';
+    volLeftMeter.classList.add('inactive');
+    volRightMeter.classList.add('inactive');
+    micDot.className = 'mic-dot';
+    micLabel.textContent = 'Mikrofon mati';
+    document.querySelectorAll('.confetti-piece').forEach(function(p) { p.remove(); });
+  };
+
+  // --- Init ---
+  createKids();
+  updateVisuals();
+})();
+</script>
+
+</body>
+</html>
