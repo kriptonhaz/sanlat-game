@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Patung Musik - Game Islami</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  @keyframes geometricBg{0%{background-position:0 0}100%{background-position:60px 60px}}
+  body{
+    font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;
+    background:linear-gradient(135deg,#0D3B0D 0%,#1B5E20 40%,#2E7D32 70%,#1B5E20 100%);
+    min-height:100vh;overflow-x:hidden;color:#fff;
+    background-size:cover;
+  }
+  body::before{
+    content:'';position:fixed;inset:0;opacity:.04;pointer-events:none;z-index:0;
+    background-image:
+      repeating-linear-gradient(0deg,transparent,transparent 28px,rgba(255,215,0,.3) 28px,rgba(255,215,0,.3) 30px),
+      repeating-linear-gradient(90deg,transparent,transparent 28px,rgba(255,215,0,.3) 28px,rgba(255,215,0,.3) 30px);
+    animation:geometricBg 4s linear infinite;
+  }
+  .container{max-width:800px;margin:0 auto;padding:10px 16px;position:relative;z-index:1}
+
+  .header{text-align:center;padding:14px 0 6px}
+  .header h1{
+    font-size:2.4em;font-weight:800;
+    background:linear-gradient(180deg,#FFD700 0%,#FFC107 50%,#FF8F00 100%);
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+    text-shadow:none;filter:drop-shadow(0 2px 4px rgba(0,0,0,.4));
+    letter-spacing:1px;
+  }
+  .header p{color:#A5D6A7;font-size:.9em;margin-top:2px}
+
+  .round-counter{
+    text-align:center;font-size:.9em;color:#A5D6A7;margin:6px 0 4px;
+    font-weight:600;letter-spacing:.5px;display:none;
+  }
+  .round-counter.show{display:block}
+  .round-counter span{color:#FFD740}
+
+  /* Status Banner */
+  .status-banner{
+    text-align:center;margin:8px 0;padding:16px 20px;border-radius:14px;
+    font-size:1.5em;font-weight:800;letter-spacing:1px;
+    transition:all .3s ease;min-height:60px;
+    display:flex;align-items:center;justify-content:center;gap:12px;
+    background:rgba(0,0,0,.3);border:2px solid rgba(255,255,255,.1);color:#A5D6A7;
+  }
+  .status-banner.green-phase{
+    background:linear-gradient(135deg,rgba(46,125,50,.5),rgba(76,175,80,.3));
+    border-color:rgba(76,175,80,.6);color:#69F0AE;
+    animation:glowGreen 1s ease-in-out infinite alternate;
+  }
+  .status-banner.red-phase{
+    background:linear-gradient(135deg,rgba(198,40,40,.5),rgba(244,67,54,.3));
+    border-color:rgba(244,67,54,.6);color:#FF8A80;
+    animation:glowRed .5s ease-in-out infinite alternate;
+  }
+  .status-banner.countdown-phase{
+    background:rgba(0,0,0,.5);border-color:rgba(255,255,255,.3);color:#fff;font-size:2em;
+  }
+  .status-banner.grace-phase{
+    background:linear-gradient(135deg,rgba(255,152,0,.4),rgba(255,193,7,.2));
+    border-color:rgba(255,193,7,.5);color:#FFD740;
+    animation:glowGrace .6s ease-in-out infinite alternate;
+  }
+  @keyframes glowGreen{from{box-shadow:0 0 15px rgba(76,175,80,.2)}to{box-shadow:0 0 30px rgba(76,175,80,.5)}}
+  @keyframes glowRed{from{box-shadow:0 0 15px rgba(244,67,54,.3)}to{box-shadow:0 0 35px rgba(244,67,54,.6)}}
+  @keyframes glowGrace{from{box-shadow:0 0 10px rgba(255,193,7,.2)}to{box-shadow:0 0 25px rgba(255,193,7,.4)}}
+
+  /* Camera */
+  .camera-area{
+    position:relative;margin:8px auto;border-radius:18px;overflow:hidden;
+    background:#000;aspect-ratio:4/3;max-width:640px;
+    border:3px solid rgba(255,255,255,.15);
+    transition:border-color .3s, box-shadow .3s;
+  }
+  .camera-area.green-border{border-color:rgba(76,175,80,.7);box-shadow:0 0 20px rgba(76,175,80,.3)}
+  .camera-area.red-border{border-color:rgba(244,67,54,.7);box-shadow:0 0 20px rgba(244,67,54,.3)}
+  .camera-area video{width:100%;height:100%;object-fit:cover;transform:scaleX(-1);display:block}
+  .camera-area .motion-overlay{position:absolute;inset:0;pointer-events:none;transform:scaleX(-1)}
+  .camera-placeholder{
+    position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    flex-direction:column;gap:8px;color:#666;font-size:1.1em;
+  }
+  .camera-placeholder .cam-icon{font-size:3em;opacity:.4}
+
+  /* Motion Meter */
+  .motion-meter{
+    background:rgba(0,0,0,.35);border-radius:12px;padding:10px 16px;margin:8px 0;
+    border:1px solid rgba(255,255,255,.1);
+  }
+  .motion-meter .meter-label{
+    font-size:.75em;color:#A5D6A7;margin-bottom:5px;
+    display:flex;justify-content:space-between;
+  }
+  .motion-meter .meter-track{
+    height:24px;background:rgba(255,255,255,.08);border-radius:12px;overflow:hidden;position:relative;
+  }
+  .motion-meter .meter-fill{
+    height:100%;border-radius:12px;transition:width .1s linear;width:0;
+    background:linear-gradient(90deg,#4CAF50,#CDDC39,#FFC107,#FF5722);
+  }
+  .motion-meter .meter-value{
+    position:absolute;right:8px;top:50%;transform:translateY(-50%);
+    font-size:.7em;font-weight:700;color:rgba(255,255,255,.9);text-shadow:0 1px 2px rgba(0,0,0,.5);
+  }
+  .motion-meter .threshold-line{
+    position:absolute;top:0;bottom:0;width:3px;background:#FFD700;border-radius:2px;
+    box-shadow:0 0 6px rgba(255,215,0,.6);transition:left .2s;z-index:2;
+  }
+
+  /* Timer */
+  .timer-bar{
+    background:rgba(0,0,0,.35);border-radius:10px;padding:6px 12px;margin:6px 0;
+    border:1px solid rgba(255,255,255,.08);
+  }
+  .timer-bar .timer-label{font-size:.7em;color:#A5D6A7;margin-bottom:3px;text-align:center}
+  .timer-bar .timer-track{height:12px;background:rgba(255,255,255,.06);border-radius:6px;overflow:hidden}
+  .timer-bar .timer-fill{
+    height:100%;border-radius:6px;transition:width .15s linear;width:100%;
+    background:linear-gradient(90deg,#4CAF50,#66BB6A);
+  }
+  .timer-bar .timer-fill.red{background:linear-gradient(90deg,#E53935,#FF5252)}
+
+  /* Controls */
+  .controls{
+    display:flex;gap:12px;justify-content:center;align-items:center;flex-wrap:wrap;margin:8px 0;
+  }
+  .btn{
+    padding:12px 32px;border:none;border-radius:10px;font-size:1.05em;
+    font-weight:700;cursor:pointer;transition:all .2s;text-transform:uppercase;letter-spacing:1px;
+  }
+  .btn:active{transform:scale(.96)}
+  .btn-start{
+    background:linear-gradient(135deg,#FFD700,#FFC107);color:#1B5E20;
+    box-shadow:0 4px 15px rgba(255,215,0,.3);
+  }
+  .btn-start:hover{box-shadow:0 6px 20px rgba(255,215,0,.5)}
+  .btn-start:disabled{opacity:.5;cursor:not-allowed}
+  .btn-reset{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3)}
+  .btn-reset:hover{background:rgba(255,255,255,.25)}
+  .btn-stop{background:rgba(244,67,54,.3);color:#FF8A80;border:1px solid rgba(244,67,54,.4);display:none}
+  .btn-stop:hover{background:rgba(244,67,54,.5)}
+  .btn-stop.show{display:inline-block}
+  .cam-status{
+    display:flex;align-items:center;gap:8px;padding:8px 18px;
+    border-radius:10px;background:rgba(0,0,0,.3);font-size:.9em;
+  }
+  .cam-dot{width:12px;height:12px;border-radius:50%;background:#666;transition:background .3s}
+  .cam-dot.active{background:#4CAF50;box-shadow:0 0 8px #4CAF50;animation:pulse 1.5s infinite}
+  .cam-dot.error{background:#f44336}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+
+  /* Sensitivity */
+  .sensitivity-section{
+    background:rgba(0,0,0,.25);border-radius:12px;padding:12px 20px;margin:8px 0;
+    border:1px solid rgba(255,215,0,.1);
+  }
+  .sensitivity-section label{
+    font-size:.8em;color:#A5D6A7;display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;
+  }
+  .sensitivity-section label strong{color:#FFD740}
+  .sensitivity-section input[type=range]{
+    width:100%;height:6px;-webkit-appearance:none;appearance:none;
+    background:linear-gradient(90deg,#FF5252,#FFC107,#4CAF50);border-radius:3px;outline:none;
+  }
+  .sensitivity-section input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none;width:20px;height:20px;border-radius:50%;
+    background:linear-gradient(135deg,#FFD700,#FFC107);border:2px solid #fff;cursor:pointer;
+    box-shadow:0 2px 6px rgba(0,0,0,.3);
+  }
+  .sensitivity-section input[type=range]::-moz-range-thumb{
+    width:20px;height:20px;border-radius:50%;
+    background:linear-gradient(135deg,#FFD700,#FFC107);border:2px solid #fff;cursor:pointer;
+  }
+  .sensitivity-hint{font-size:.7em;color:#81C784;text-align:center;margin-top:4px}
+
+  /* Instructions */
+  .instructions{
+    background:rgba(0,0,0,.25);border-radius:14px;padding:14px 20px;margin:8px 0;
+    border:1px solid rgba(255,215,0,.1);
+  }
+  .instructions h3{color:#FFD740;font-size:.95em;margin-bottom:8px;text-align:center}
+  .inst-text{font-size:.85em;color:#C8E6C9;text-align:center;line-height:1.6}
+
+  /* ========== GALLERY OVERLAY ========== */
+  .gallery-overlay{
+    display:none;position:fixed;inset:0;background:rgba(0,0,0,.92);
+    z-index:100;overflow-y:auto;padding:20px 16px 40px;
+  }
+  .gallery-overlay.show{display:block}
+  .gallery-content{max-width:750px;margin:0 auto;text-align:center}
+  .gallery-content h2{
+    font-size:1.8em;color:#FF8A80;margin-bottom:4px;
+    animation:alertPop .4s ease;
+  }
+  .gallery-content .gallery-subtitle{
+    color:#A5D6A7;font-size:.9em;margin-bottom:16px;
+  }
+  .gallery-ref-label{
+    text-align:left;font-size:.8em;color:#69F0AE;font-weight:700;
+    margin:12px 0 6px;letter-spacing:.5px;
+  }
+  .gallery-cap-label{
+    text-align:left;font-size:.8em;color:#FF8A80;font-weight:700;
+    margin:16px 0 6px;letter-spacing:.5px;
+  }
+  .gallery-grid{
+    display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
+    gap:10px;margin-bottom:8px;
+  }
+  .gallery-item{
+    border-radius:12px;overflow:hidden;cursor:pointer;
+    transition:transform .2s,box-shadow .2s;
+    border:2px solid rgba(255,255,255,.15);
+    background:#111;
+  }
+  .gallery-item:hover{transform:scale(1.03);box-shadow:0 4px 20px rgba(0,0,0,.5)}
+  .gallery-item.ref-item{border-color:rgba(76,175,80,.5)}
+  .gallery-item.cap-item{border-color:rgba(244,67,54,.5)}
+  .gallery-item img{width:100%;display:block}
+  .gallery-item .cap-info{
+    padding:6px 10px;font-size:.75em;color:#A5D6A7;
+    background:rgba(0,0,0,.5);display:flex;justify-content:space-between;
+  }
+  .gallery-item.cap-item .cap-info{color:#FF8A80}
+  .gallery-actions{
+    margin-top:20px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap;
+  }
+  .gallery-actions .btn{min-width:180px}
+
+  /* Lightbox */
+  .lightbox{
+    display:none;position:fixed;inset:0;background:rgba(0,0,0,.95);
+    z-index:110;align-items:center;justify-content:center;cursor:zoom-out;padding:20px;
+  }
+  .lightbox.show{display:flex}
+  .lightbox img{
+    max-width:95vw;max-height:90vh;border-radius:12px;
+    border:2px solid rgba(255,215,0,.3);object-fit:contain;
+  }
+
+  /* Alert Flash */
+  .alert-overlay{
+    display:none;position:fixed;inset:0;z-index:90;
+    align-items:center;justify-content:center;
+    pointer-events:none;animation:alertFlash 1.2s ease forwards;
+  }
+  .alert-overlay.show{display:flex}
+  .alert-overlay.caught{background:radial-gradient(ellipse at center,rgba(244,67,54,.5),rgba(244,67,54,.1))}
+  .alert-overlay.safe{background:radial-gradient(ellipse at center,rgba(76,175,80,.5),rgba(76,175,80,.1))}
+  .alert-text{
+    font-size:2.8em;font-weight:900;letter-spacing:3px;
+    text-shadow:0 4px 20px rgba(0,0,0,.5);animation:alertPop .4s ease;text-align:center;line-height:1.3;
+  }
+  .alert-overlay.caught .alert-text{color:#FF8A80}
+  .alert-overlay.safe .alert-text{color:#69F0AE}
+  @keyframes alertFlash{0%{opacity:1}70%{opacity:1}100%{opacity:0}}
+  @keyframes alertPop{0%{transform:scale(.3);opacity:0}100%{transform:scale(1);opacity:1}}
+
+  @keyframes confetti{0%{transform:translateY(-10px) rotate(0deg);opacity:1}100%{transform:translateY(100vh) rotate(720deg);opacity:0}}
+  .confetti-piece{position:fixed;width:10px;height:10px;top:-10px;z-index:120;animation:confetti 3s ease-in forwards}
+
+  @media(max-width:700px){
+    .header h1{font-size:1.8em}
+    .status-banner{font-size:1.2em;padding:10px 14px}
+    .btn{padding:10px 22px;font-size:.9em}
+    .alert-text{font-size:2em}
+    .gallery-grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr))}
+    .gallery-content h2{font-size:1.4em}
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <h1>Patung Musik</h1>
+    <p>Jangan bergerak saat musik berhenti!</p>
+  </div>
+
+  <div class="round-counter" id="roundCounter">Ronde <span id="roundCurrent">1</span></div>
+
+  <div class="status-banner" id="statusBanner">Tekan "Mulai" untuk bermain</div>
+
+  <div class="camera-area" id="cameraArea">
+    <video id="video" autoplay playsinline muted></video>
+    <canvas class="motion-overlay" id="motionOverlay"></canvas>
+    <div class="camera-placeholder" id="cameraPlaceholder">
+      <div class="cam-icon">&#128247;</div>
+      <span>Kamera belum aktif</span>
+    </div>
+  </div>
+
+  <div class="motion-meter">
+    <div class="meter-label">
+      <span>Gerakan Terdeteksi</span>
+      <span id="motionValue">0%</span>
+    </div>
+    <div class="meter-track">
+      <div class="meter-fill" id="motionFill"></div>
+      <div class="threshold-line" id="thresholdLine" style="left:10%"></div>
+      <div class="meter-value" id="motionValueInner">0%</div>
+    </div>
+  </div>
+
+  <div class="timer-bar">
+    <div class="timer-label" id="timerLabel">Waktu fase</div>
+    <div class="timer-track">
+      <div class="timer-fill" id="timerFill"></div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button class="btn btn-start" id="btnStart" onclick="startGame()">Mulai</button>
+    <button class="btn btn-stop" id="btnStop" onclick="stopGame()">Selesai</button>
+    <button class="btn btn-reset" onclick="resetGame()">Ulangi</button>
+    <div class="cam-status">
+      <div class="cam-dot" id="camDot"></div>
+      <span id="camLabel">Kamera mati</span>
+    </div>
+  </div>
+
+  <div class="sensitivity-section">
+    <label>
+      <span>Sensitivitas Tangkapan</span>
+      <strong id="sensitivityValue">10%</strong>
+    </label>
+    <input type="range" id="sensitivitySlider" min="2" max="40" value="10">
+    <div class="sensitivity-hint">Rendah = sangat sensitif (gerakan kecil tertangkap) &nbsp;|&nbsp; Tinggi = toleran</div>
+  </div>
+
+  <div class="instructions">
+    <h3>Cara Bermain</h3>
+    <div class="inst-text">
+      Arahkan kamera ke semua peserta. Tekan <strong>Mulai</strong> untuk memulai.<br>
+      Saat musik bermain (hijau), semua boleh bergerak bebas.<br>
+      Saat musik berhenti (merah), <strong>semua harus DIAM!</strong><br>
+      Kamera akan mengambil tangkapan layar jika ada yang bergerak.<br>
+      Operator melihat hasilnya dan <strong>mengeliminasi yang bergerak secara manual</strong>.<br>
+      Tekan <strong>Lanjutkan</strong> untuk ronde berikutnya, atau <strong>Selesai</strong> untuk mengakhiri.
+    </div>
+  </div>
+</div>
+
+<audio id="music" preload="auto" loop>
+  <source src="Raihan Mari Berhibur.mp3" type="audio/mpeg">
+</audio>
+
+<!-- Gallery Overlay -->
+<div class="gallery-overlay" id="galleryOverlay">
+  <div class="gallery-content" id="galleryContent"></div>
+</div>
+
+<!-- Lightbox -->
+<div class="lightbox" id="lightbox" onclick="closeLightbox()">
+  <img id="lightboxImg" src="">
+</div>
+
+<!-- Alert Flash -->
+<div class="alert-overlay" id="alertOverlay">
+  <div class="alert-text" id="alertText"></div>
+</div>
+
+<script>
+(function() {
+  // --- Config ---
+  var GREEN_MIN = 5000;
+  var GREEN_MAX = 15000;
+  var GRACE_PERIOD = 1500;
+  var DETECT_DURATION = 6000;
+  var CAPTURE_COOLDOWN = 800; // ms between captures
+  var MAX_CAPTURES = 12;
+  var PIXEL_DIFF_THRESHOLD = 30;
+  var DETECTION_FPS = 15;
+  var MUSIC_FADE_MS = 300;
+  var DOWNSCALE = 0.25;
+  var BUZZER_FREQ = 220;
+  var BUZZER_DURATION = 0.6;
+
+  // --- State ---
+  var gameRunning = false;
+  var roundNumber = 0;
+  var phase = 'idle';
+  var sensitivity = 10; // % of changed pixels to trigger capture
+  var motionLevel = 0;
+
+  // Detection
+  var camStream = null;
+  var videoEl, motionCanvas, motionCtx;
+  var detectCanvas, detectCtx;
+  var captureCanvas, captureCtx;
+  var referenceFrameData = null;
+  var detectionInterval = null;
+  var dw = 0, dh = 0;
+
+  // Captures
+  var captures = [];
+  var referenceScreenshot = '';
+  var detectStartTime = 0;
+  var lastCaptureTime = 0;
+
+  // Timers
+  var phaseTimeout = null;
+  var timerInterval = null;
+  var phaseStartTime = 0;
+  var phaseDuration = 0;
+
+  // Audio
+  var music = null;
+  var audioCtx = null;
+  var gainNode = null;
+  var musicSource = null;
+  var musicConnected = false;
+
+  // --- DOM ---
+  var statusBanner = document.getElementById('statusBanner');
+  var btnStart = document.getElementById('btnStart');
+  var btnStop = document.getElementById('btnStop');
+  var camDot = document.getElementById('camDot');
+  var camLabel = document.getElementById('camLabel');
+  var cameraArea = document.getElementById('cameraArea');
+  var cameraPlaceholder = document.getElementById('cameraPlaceholder');
+  var motionFill = document.getElementById('motionFill');
+  var motionValue = document.getElementById('motionValue');
+  var motionValueInner = document.getElementById('motionValueInner');
+  var thresholdLine = document.getElementById('thresholdLine');
+  var timerFill = document.getElementById('timerFill');
+  var timerLabel = document.getElementById('timerLabel');
+  var roundCounter = document.getElementById('roundCounter');
+  var roundCurrentEl = document.getElementById('roundCurrent');
+  var sensitivitySlider = document.getElementById('sensitivitySlider');
+  var sensitivityValueEl = document.getElementById('sensitivityValue');
+  var galleryOverlay = document.getElementById('galleryOverlay');
+  var galleryContent = document.getElementById('galleryContent');
+  var lightbox = document.getElementById('lightbox');
+  var lightboxImg = document.getElementById('lightboxImg');
+  var alertOverlay = document.getElementById('alertOverlay');
+  var alertText = document.getElementById('alertText');
+
+  videoEl = document.getElementById('video');
+  motionCanvas = document.getElementById('motionOverlay');
+  motionCtx = motionCanvas.getContext('2d');
+
+  detectCanvas = document.createElement('canvas');
+  detectCtx = detectCanvas.getContext('2d', { willReadFrequently: true });
+
+  captureCanvas = document.createElement('canvas');
+  captureCtx = captureCanvas.getContext('2d');
+
+  music = document.getElementById('music');
+
+  // --- Sensitivity slider ---
+  sensitivitySlider.addEventListener('input', function() {
+    sensitivity = parseInt(this.value);
+    sensitivityValueEl.textContent = sensitivity + '%';
+    thresholdLine.style.left = Math.min(sensitivity, 100) + '%';
+  });
+
+  // --- Camera ---
+  async function initCamera() {
+    try {
+      camStream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }
+      });
+      videoEl.srcObject = camStream;
+      await videoEl.play();
+      cameraPlaceholder.style.display = 'none';
+      camDot.className = 'cam-dot active';
+      camLabel.textContent = 'Kamera aktif';
+
+      var vw = videoEl.videoWidth || 640;
+      var vh = videoEl.videoHeight || 480;
+      dw = Math.round(vw * DOWNSCALE);
+      dh = Math.round(vh * DOWNSCALE);
+      detectCanvas.width = dw;
+      detectCanvas.height = dh;
+      motionCanvas.width = vw;
+      motionCanvas.height = vh;
+      captureCanvas.width = vw;
+      captureCanvas.height = vh;
+      return true;
+    } catch(e) {
+      camDot.className = 'cam-dot error';
+      camLabel.textContent = 'Kamera gagal';
+      alert('Tidak bisa mengakses kamera. Pastikan izin kamera diberikan.');
+      return false;
+    }
+  }
+
+  // --- Audio ---
+  function ensureAudioCtx() {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    if (!musicConnected) {
+      musicSource = audioCtx.createMediaElementSource(music);
+      gainNode = audioCtx.createGain();
+      musicSource.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+      gainNode.gain.value = 1;
+      musicConnected = true;
+    }
+  }
+
+  function playMusic() {
+    ensureAudioCtx();
+    gainNode.gain.cancelScheduledValues(audioCtx.currentTime);
+    gainNode.gain.setValueAtTime(1, audioCtx.currentTime);
+    music.play().catch(function() {});
+  }
+
+  function fadeOutMusic() {
+    return new Promise(function(resolve) {
+      if (!audioCtx || !gainNode) { music.pause(); resolve(); return; }
+      gainNode.gain.cancelScheduledValues(audioCtx.currentTime);
+      gainNode.gain.setValueAtTime(gainNode.gain.value, audioCtx.currentTime);
+      gainNode.gain.linearRampToValueAtTime(0, audioCtx.currentTime + MUSIC_FADE_MS / 1000);
+      setTimeout(function() {
+        music.pause();
+        gainNode.gain.setValueAtTime(1, audioCtx.currentTime);
+        resolve();
+      }, MUSIC_FADE_MS);
+    });
+  }
+
+  function playBuzzer() {
+    ensureAudioCtx();
+    var osc = audioCtx.createOscillator();
+    var g = audioCtx.createGain();
+    osc.type = 'square'; osc.frequency.value = BUZZER_FREQ;
+    g.gain.setValueAtTime(0.25, audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + BUZZER_DURATION);
+    osc.connect(g); g.connect(audioCtx.destination);
+    osc.start(); osc.stop(audioCtx.currentTime + BUZZER_DURATION);
+  }
+
+  // --- Screenshot Capture ---
+  function takeScreenshot(withOverlay) {
+    var w = captureCanvas.width, h = captureCanvas.height;
+    captureCtx.save();
+    captureCtx.translate(w, 0);
+    captureCtx.scale(-1, 1);
+    captureCtx.drawImage(videoEl, 0, 0, w, h);
+    captureCtx.restore();
+    if (withOverlay) {
+      captureCtx.save();
+      captureCtx.translate(w, 0);
+      captureCtx.scale(-1, 1);
+      captureCtx.drawImage(motionCanvas, 0, 0, w, h);
+      captureCtx.restore();
+    }
+    return captureCanvas.toDataURL('image/jpeg', 0.85);
+  }
+
+  function takeScreenshotWithLabel(timeSec, pct) {
+    var url = takeScreenshot(true);
+    // Bake timestamp label into the image
+    var w = captureCanvas.width, h = captureCanvas.height;
+    captureCtx.fillStyle = 'rgba(0,0,0,0.65)';
+    captureCtx.fillRect(0, h - 32, 180, 32);
+    captureCtx.fillStyle = '#FF8A80';
+    captureCtx.font = 'bold 15px sans-serif';
+    captureCtx.fillText('t=' + timeSec.toFixed(1) + 's  gerakan: ' + pct.toFixed(0) + '%', 8, h - 10);
+    return captureCanvas.toDataURL('image/jpeg', 0.85);
+  }
+
+  // --- Detection Loop ---
+  function startDetection() {
+    // Clear overlay and take reference
+    motionCtx.clearRect(0, 0, motionCanvas.width, motionCanvas.height);
+    detectCtx.drawImage(videoEl, 0, 0, dw, dh);
+    referenceFrameData = detectCtx.getImageData(0, 0, dw, dh);
+    referenceScreenshot = takeScreenshot(false);
+
+    captures = [];
+    detectStartTime = Date.now();
+    lastCaptureTime = 0;
+
+    if (detectionInterval) clearInterval(detectionInterval);
+    detectionInterval = setInterval(detectLoop, 1000 / DETECTION_FPS);
+  }
+
+  function stopDetection() {
+    if (detectionInterval) { clearInterval(detectionInterval); detectionInterval = null; }
+    motionCtx.clearRect(0, 0, motionCanvas.width, motionCanvas.height);
+    motionLevel = 0;
+    updateMotionMeter(0);
+  }
+
+  function detectLoop() {
+    if (!videoEl.videoWidth || !referenceFrameData) return;
+
+    detectCtx.drawImage(videoEl, 0, 0, dw, dh);
+    var currentData = detectCtx.getImageData(0, 0, dw, dh);
+
+    var curr = currentData.data;
+    var ref = referenceFrameData.data;
+    var totalPixels = dw * dh;
+    var changedPixels = 0;
+
+    // Build overlay at detection resolution
+    var overlayData = motionCtx.createImageData(dw, dh);
+    var od = overlayData.data;
+
+    for (var i = 0; i < totalPixels; i++) {
+      var pi = i * 4;
+      var dr = Math.abs(curr[pi] - ref[pi]);
+      var dg = Math.abs(curr[pi + 1] - ref[pi + 1]);
+      var db = Math.abs(curr[pi + 2] - ref[pi + 2]);
+      if ((dr + dg + db) / 3 > PIXEL_DIFF_THRESHOLD) {
+        changedPixels++;
+        od[pi] = 255; od[pi + 1] = 50; od[pi + 2] = 50; od[pi + 3] = 140;
+      }
+    }
+
+    // Draw overlay scaled up
+    motionCtx.clearRect(0, 0, motionCanvas.width, motionCanvas.height);
+    var tmpC = document.createElement('canvas');
+    tmpC.width = dw; tmpC.height = dh;
+    tmpC.getContext('2d').putImageData(overlayData, 0, 0);
+    motionCtx.drawImage(tmpC, 0, 0, motionCanvas.width, motionCanvas.height);
+
+    motionLevel = (changedPixels / totalPixels) * 100;
+    updateMotionMeter(motionLevel);
+
+    // Capture screenshot if motion exceeds threshold
+    if (phase === 'detect') {
+      var now = Date.now();
+      var elapsed = now - detectStartTime;
+      if (motionLevel > sensitivity && now - lastCaptureTime > CAPTURE_COOLDOWN && captures.length < MAX_CAPTURES) {
+        var screenshot = takeScreenshotWithLabel(elapsed / 1000, motionLevel);
+        captures.push({
+          dataUrl: screenshot,
+          timeSec: elapsed / 1000,
+          motionPct: motionLevel
+        });
+        lastCaptureTime = now;
+        playBuzzer();
+
+        // Update banner with capture count
+        statusBanner.textContent = 'DIAM! ' + captures.length + ' tangkapan gerakan!';
+      }
+    }
+  }
+
+  function updateMotionMeter(level) {
+    var pct = Math.min(100, level).toFixed(1);
+    motionFill.style.width = pct + '%';
+    motionValue.textContent = pct + '%';
+    motionValueInner.textContent = pct + '%';
+  }
+
+  // --- Timer ---
+  function startTimer(duration, isRed) {
+    phaseDuration = duration;
+    phaseStartTime = Date.now();
+    timerFill.className = 'timer-fill' + (isRed ? ' red' : '');
+    timerFill.style.width = '100%';
+    if (timerInterval) clearInterval(timerInterval);
+    timerInterval = setInterval(function() {
+      var remaining = Math.max(0, 1 - (Date.now() - phaseStartTime) / phaseDuration);
+      timerFill.style.width = (remaining * 100) + '%';
+      if (remaining <= 0) clearInterval(timerInterval);
+    }, 50);
+  }
+
+  function stopTimer() {
+    if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+    timerFill.style.width = '0%';
+  }
+
+  // --- Alert ---
+  function showAlert(text, type) {
+    alertText.textContent = text;
+    alertOverlay.className = 'alert-overlay show ' + type;
+    setTimeout(function() { alertOverlay.className = 'alert-overlay'; }, 1500);
+  }
+
+  // --- Gallery ---
+  function showGallery() {
+    phase = 'review';
+    var html = '';
+    html += '<h2>Gerakan Terdeteksi!</h2>';
+    html += '<div class="gallery-subtitle">' + captures.length + ' tangkapan gerakan di ronde ' + roundNumber + '</div>';
+
+    // Reference frame
+    html += '<div class="gallery-ref-label">POSISI DIAM (referensi)</div>';
+    html += '<div class="gallery-grid">';
+    html += '<div class="gallery-item ref-item" onclick="openLightbox(this)">';
+    html += '<img src="' + referenceScreenshot + '">';
+    html += '<div class="cap-info"><span>Posisi awal</span><span>Diam</span></div>';
+    html += '</div></div>';
+
+    // Captures
+    html += '<div class="gallery-cap-label">TANGKAPAN GERAKAN (' + captures.length + ')</div>';
+    html += '<div class="gallery-grid">';
+    for (var i = 0; i < captures.length; i++) {
+      var c = captures[i];
+      html += '<div class="gallery-item cap-item" onclick="openLightbox(this)">';
+      html += '<img src="' + c.dataUrl + '">';
+      html += '<div class="cap-info">';
+      html += '<span>t=' + c.timeSec.toFixed(1) + 's</span>';
+      html += '<span>Gerakan: ' + c.motionPct.toFixed(0) + '%</span>';
+      html += '</div></div>';
+    }
+    html += '</div>';
+
+    // Actions
+    html += '<div class="gallery-actions">';
+    html += '<button class="btn btn-start" onclick="continueGame()">Lanjutkan</button>';
+    html += '<button class="btn btn-stop show" onclick="stopGame()">Selesai</button>';
+    html += '</div>';
+
+    galleryContent.innerHTML = html;
+    galleryOverlay.classList.add('show');
+  }
+
+  function hideGallery() {
+    galleryOverlay.classList.remove('show');
+  }
+
+  window.openLightbox = function(el) {
+    var img = el.querySelector('img');
+    if (!img) return;
+    lightboxImg.src = img.src;
+    lightbox.classList.add('show');
+  };
+
+  window.closeLightbox = function() {
+    lightbox.classList.remove('show');
+    lightboxImg.src = '';
+  };
+
+  // --- Game Flow ---
+  window.startGame = async function() {
+    if (gameRunning) return;
+    btnStart.disabled = true;
+
+    if (!camStream) {
+      var ok = await initCamera();
+      if (!ok) { btnStart.disabled = false; return; }
+    }
+
+    await new Promise(function(r) { setTimeout(r, 500); });
+
+    gameRunning = true;
+    roundNumber = 0;
+    btnStop.classList.add('show');
+    roundCounter.classList.add('show');
+
+    startCountdown(3);
+  };
+
+  window.continueGame = function() {
+    hideGallery();
+    if (!gameRunning) return;
+    startGreenPhase();
+  };
+
+  window.stopGame = function() {
+    hideGallery();
+    gameRunning = false;
+    phase = 'idle';
+    clearTimeout(phaseTimeout);
+    stopDetection();
+    stopTimer();
+    music.pause();
+    music.currentTime = 0;
+    if (gainNode && audioCtx) {
+      gainNode.gain.cancelScheduledValues(audioCtx.currentTime);
+      gainNode.gain.setValueAtTime(1, audioCtx.currentTime);
+    }
+
+    statusBanner.className = 'status-banner';
+    statusBanner.textContent = 'Game selesai! ' + roundNumber + ' ronde dimainkan.';
+    cameraArea.className = 'camera-area';
+    timerLabel.textContent = 'Waktu fase';
+    btnStart.disabled = false;
+    btnStop.classList.remove('show');
+  };
+
+  window.resetGame = function() {
+    window.stopGame();
+    roundNumber = 0;
+    captures = [];
+    referenceScreenshot = '';
+    roundCounter.classList.remove('show');
+    alertOverlay.className = 'alert-overlay';
+    statusBanner.textContent = 'Tekan "Mulai" untuk bermain';
+    document.querySelectorAll('.confetti-piece').forEach(function(p) { p.remove(); });
+  };
+
+  function startCountdown(step) {
+    if (!gameRunning) return;
+    phase = 'countdown';
+    statusBanner.className = 'status-banner countdown-phase';
+    cameraArea.className = 'camera-area';
+    if (step > 0) {
+      statusBanner.textContent = step;
+      phaseTimeout = setTimeout(function() { startCountdown(step - 1); }, 800);
+    } else {
+      statusBanner.textContent = 'MULAI!';
+      phaseTimeout = setTimeout(startGreenPhase, 600);
+    }
+  }
+
+  function startGreenPhase() {
+    if (!gameRunning) return;
+    roundNumber++;
+    roundCurrentEl.textContent = roundNumber;
+    phase = 'green';
+
+    statusBanner.className = 'status-banner green-phase';
+    statusBanner.textContent = 'BERGERAK! Musik bermain...';
+    timerLabel.textContent = 'Musik bermain...';
+    cameraArea.className = 'camera-area green-border';
+    motionCtx.clearRect(0, 0, motionCanvas.width, motionCanvas.height);
+    updateMotionMeter(0);
+
+    playMusic();
+
+    var duration = GREEN_MIN + Math.random() * (GREEN_MAX - GREEN_MIN);
+    startTimer(duration, false);
+    phaseTimeout = setTimeout(startGracePhase, duration);
+  }
+
+  async function startGracePhase() {
+    if (!gameRunning) return;
+    phase = 'grace';
+    await fadeOutMusic();
+
+    statusBanner.className = 'status-banner grace-phase';
+    statusBanner.textContent = 'DIAM! JANGAN BERGERAK!';
+    timerLabel.textContent = 'Bersiap... jangan bergerak!';
+    cameraArea.className = 'camera-area red-border';
+
+    startTimer(GRACE_PERIOD, true);
+    phaseTimeout = setTimeout(startDetectPhase, GRACE_PERIOD);
+  }
+
+  function startDetectPhase() {
+    if (!gameRunning) return;
+    phase = 'detect';
+
+    statusBanner.className = 'status-banner red-phase';
+    statusBanner.textContent = 'DIAM! Mendeteksi gerakan...';
+    timerLabel.textContent = 'Deteksi gerakan aktif!';
+
+    startDetection();
+    startTimer(DETECT_DURATION, true);
+    phaseTimeout = setTimeout(endDetectPhase, DETECT_DURATION);
+  }
+
+  function endDetectPhase() {
+    if (phase !== 'detect') return;
+    stopDetection();
+    stopTimer();
+
+    if (captures.length > 0) {
+      showAlert(captures.length + ' TERTANGKAP!', 'caught');
+      // Show gallery after alert fades
+      setTimeout(showGallery, 800);
+    } else {
+      showAlert('AMAN!', 'safe');
+      statusBanner.className = 'status-banner green-phase';
+      statusBanner.textContent = 'Ronde ' + roundNumber + ': Tidak ada yang bergerak!';
+      cameraArea.className = 'camera-area green-border';
+      // Auto-continue after brief pause
+      phaseTimeout = setTimeout(function() {
+        if (gameRunning) startGreenPhase();
+      }, 2500);
+    }
+  }
+})();
+</script>
+
+</body>
+</html>

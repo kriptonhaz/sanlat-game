@@ -1,0 +1,1285 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nahkoda Cilik - Game Islami</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  @keyframes geometricBg{0%{background-position:0 0}100%{background-position:60px 60px}}
+  body{
+    font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;
+    background:linear-gradient(135deg,#0D3B0D 0%,#1B5E20 40%,#2E7D32 70%,#1B5E20 100%);
+    min-height:100vh;overflow-x:hidden;color:#fff;
+    background-size:cover;
+  }
+  body::before{
+    content:'';position:fixed;inset:0;opacity:.04;pointer-events:none;z-index:0;
+    background-image:
+      repeating-linear-gradient(0deg,transparent,transparent 28px,rgba(255,215,0,.3) 28px,rgba(255,215,0,.3) 30px),
+      repeating-linear-gradient(90deg,transparent,transparent 28px,rgba(255,215,0,.3) 28px,rgba(255,215,0,.3) 30px);
+    animation:geometricBg 4s linear infinite;
+  }
+  .container{max-width:900px;margin:0 auto;padding:10px 16px;position:relative;z-index:1}
+
+  .header{text-align:center;padding:14px 0 6px}
+  .header h1{
+    font-size:2.4em;font-weight:800;
+    background:linear-gradient(180deg,#FFD700 0%,#FFC107 50%,#FF8F00 100%);
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+    text-shadow:none;filter:drop-shadow(0 2px 4px rgba(0,0,0,.4));
+    letter-spacing:1px;
+  }
+  .header p{color:#A5D6A7;font-size:.9em;margin-top:2px}
+
+  /* Game Wrapper */
+  .game-wrapper{
+    position:relative;border-radius:18px;overflow:hidden;
+    background:#0A1628;aspect-ratio:8/5;width:100%;
+    border:3px solid rgba(255,215,0,.2);
+    box-shadow:0 4px 30px rgba(0,0,0,.4);
+    margin:8px 0;
+  }
+  .game-wrapper canvas{width:100%;height:100%;display:block}
+  .game-wrapper.shake{animation:screenShake .4s ease}
+  @keyframes screenShake{
+    0%,100%{transform:translate(0)}
+    10%{transform:translate(-6px,3px)}
+    20%{transform:translate(5px,-4px)}
+    30%{transform:translate(-4px,5px)}
+    40%{transform:translate(6px,-2px)}
+    50%{transform:translate(-3px,4px)}
+    60%{transform:translate(4px,-3px)}
+    70%{transform:translate(-5px,2px)}
+    80%{transform:translate(3px,-4px)}
+    90%{transform:translate(-2px,3px)}
+  }
+
+  /* Camera Panel */
+  .camera-panel{
+    display:flex;align-items:center;gap:14px;
+    background:rgba(0,0,0,.35);border-radius:14px;padding:12px 16px;margin:8px 0;
+    border:1px solid rgba(255,255,255,.1);
+    flex-wrap:wrap;justify-content:center;
+  }
+  .cam-feed-wrap{
+    position:relative;width:180px;aspect-ratio:4/3;border-radius:10px;overflow:hidden;
+    background:#000;border:2px solid rgba(255,255,255,.15);flex-shrink:0;
+  }
+  .cam-feed-wrap video{width:100%;height:100%;object-fit:cover;transform:scaleX(-1);display:block}
+  .cam-feed-wrap .divider-line{
+    position:absolute;top:0;bottom:0;left:50%;width:2px;
+    background:rgba(255,255,255,.6);z-index:2;
+  }
+  .cam-feed-wrap .side-label{
+    position:absolute;top:4px;font-size:.55em;font-weight:700;z-index:3;
+    color:rgba(255,255,255,.8);text-shadow:0 1px 3px rgba(0,0,0,.8);
+  }
+  .cam-feed-wrap .side-label.left-label{left:6px}
+  .cam-feed-wrap .side-label.right-label{right:6px}
+  .cam-placeholder{
+    position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    color:#666;font-size:.8em;flex-direction:column;gap:4px;
+  }
+  .cam-placeholder .cam-icon{font-size:2em;opacity:.4}
+
+  .motion-bars{
+    display:flex;flex-direction:column;gap:8px;flex:1;min-width:140px;
+  }
+  .motion-bar{
+    display:flex;align-items:center;gap:8px;
+  }
+  .motion-bar .bar-label{font-size:.7em;font-weight:700;width:50px;text-align:right}
+  .motion-bar .bar-track{
+    flex:1;height:18px;background:rgba(255,255,255,.08);border-radius:9px;overflow:hidden;
+    position:relative;
+  }
+  .motion-bar .bar-fill{
+    height:100%;border-radius:9px;transition:width .1s linear;width:0;
+  }
+  .bar-fill.left-fill{background:linear-gradient(90deg,#1565C0,#42A5F5)}
+  .bar-fill.right-fill{background:linear-gradient(90deg,#F9A825,#FFD740)}
+  .motion-bar .bar-value{
+    position:absolute;right:6px;top:50%;transform:translateY(-50%);
+    font-size:.6em;font-weight:700;color:rgba(255,255,255,.8);
+  }
+
+  .direction-indicator{
+    display:flex;flex-direction:column;align-items:center;gap:2px;min-width:50px;
+  }
+  .direction-arrow{
+    font-size:2em;font-weight:900;transition:all .2s;color:#555;
+  }
+  .direction-arrow.go-left{color:#42A5F5;transform:scaleX(-1)}
+  .direction-arrow.go-right{color:#FFD740}
+  .direction-label{font-size:.6em;color:#A5D6A7}
+
+  /* Controls */
+  .controls{
+    display:flex;gap:12px;justify-content:center;align-items:center;flex-wrap:wrap;margin:8px 0;
+  }
+  .btn{
+    padding:12px 32px;border:none;border-radius:10px;font-size:1.05em;
+    font-weight:700;cursor:pointer;transition:all .2s;text-transform:uppercase;letter-spacing:1px;
+  }
+  .btn:active{transform:scale(.96)}
+  .btn-start{
+    background:linear-gradient(135deg,#FFD700,#FFC107);color:#1B5E20;
+    box-shadow:0 4px 15px rgba(255,215,0,.3);
+  }
+  .btn-start:hover{box-shadow:0 6px 20px rgba(255,215,0,.5)}
+  .btn-start:disabled{opacity:.5;cursor:not-allowed}
+  .btn-reset{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3)}
+  .btn-reset:hover{background:rgba(255,255,255,.25)}
+  .cam-status{
+    display:flex;align-items:center;gap:8px;padding:8px 18px;
+    border-radius:10px;background:rgba(0,0,0,.3);font-size:.9em;
+  }
+  .cam-dot{width:12px;height:12px;border-radius:50%;background:#666;transition:background .3s}
+  .cam-dot.active{background:#4CAF50;box-shadow:0 0 8px #4CAF50;animation:pulse 1.5s infinite}
+  .cam-dot.error{background:#f44336}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+
+  /* Instructions */
+  .instructions{
+    background:rgba(0,0,0,.25);border-radius:14px;padding:14px 20px;margin:8px 0;
+    border:1px solid rgba(255,215,0,.1);
+  }
+  .instructions h3{color:#FFD740;font-size:.95em;margin-bottom:8px;text-align:center}
+  .inst-text{font-size:.85em;color:#C8E6C9;text-align:center;line-height:1.6}
+
+  /* Overlay */
+  .overlay{
+    display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);
+    z-index:100;align-items:center;justify-content:center;
+  }
+  .overlay.show{display:flex}
+  .popup-box{
+    background:linear-gradient(135deg,#1B5E20,#2E7D32);
+    border-radius:24px;padding:40px 50px;text-align:center;
+    border:3px solid #FFD700;box-shadow:0 0 60px rgba(255,215,0,.3);
+    animation:popIn .5s ease;max-width:500px;width:90%;
+  }
+  @keyframes popIn{0%{transform:scale(.5);opacity:0}100%{transform:scale(1);opacity:1}}
+  .popup-box h2{
+    font-size:2.2em;
+    background:linear-gradient(180deg,#FFD700,#FF8F00);
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+    margin-bottom:8px;
+  }
+  .popup-box .result-text{font-size:1.3em;color:#E8F5E9;margin-bottom:6px}
+  .popup-box .result-sub{font-size:.95em;color:#A5D6A7;margin-bottom:20px}
+  .popup-box .btn{margin-top:10px}
+
+  @keyframes confetti{0%{transform:translateY(-10px) rotate(0deg);opacity:1}100%{transform:translateY(100vh) rotate(720deg);opacity:0}}
+  .confetti-piece{position:fixed;width:10px;height:10px;top:-10px;z-index:101;animation:confetti 3s ease-in forwards}
+
+  @media(max-width:700px){
+    .header h1{font-size:1.8em}
+    .btn{padding:10px 22px;font-size:.9em}
+    .cam-feed-wrap{width:140px}
+    .camera-panel{gap:10px;padding:10px}
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <h1>Nahkoda Cilik</h1>
+    <p>Kendalikan kapal bersama-sama!</p>
+  </div>
+
+  <!-- Game Canvas -->
+  <div class="game-wrapper" id="gameWrapper">
+    <canvas id="gameCanvas" width="800" height="500"></canvas>
+  </div>
+
+  <!-- Camera Panel -->
+  <div class="camera-panel">
+    <div class="cam-feed-wrap" id="camFeedWrap">
+      <video id="video" autoplay playsinline muted></video>
+      <div class="divider-line"></div>
+      <div class="side-label left-label">KIRI</div>
+      <div class="side-label right-label">KANAN</div>
+      <div class="cam-placeholder" id="camPlaceholder">
+        <div class="cam-icon">&#128247;</div>
+        <span>Kamera mati</span>
+      </div>
+    </div>
+    <div class="motion-bars">
+      <div class="motion-bar">
+        <div class="bar-label" style="color:#64B5F6">KIRI</div>
+        <div class="bar-track">
+          <div class="bar-fill left-fill" id="barLeft"></div>
+          <div class="bar-value" id="barValLeft">0</div>
+        </div>
+      </div>
+      <div class="motion-bar">
+        <div class="bar-label" style="color:#FFD740">KANAN</div>
+        <div class="bar-track">
+          <div class="bar-fill right-fill" id="barRight"></div>
+          <div class="bar-value" id="barValRight">0</div>
+        </div>
+      </div>
+    </div>
+    <div class="direction-indicator">
+      <div class="direction-arrow" id="dirArrow">&#9654;</div>
+      <div class="direction-label" id="dirLabel">-</div>
+    </div>
+  </div>
+
+  <!-- Controls -->
+  <div class="controls">
+    <button class="btn btn-start" id="btnStart" onclick="startGame()">Mulai</button>
+    <button class="btn btn-reset" onclick="resetGame()">Ulangi</button>
+    <div class="cam-status">
+      <div class="cam-dot" id="camDot"></div>
+      <span id="camLabel">Kamera mati</span>
+    </div>
+  </div>
+
+  <!-- Instructions -->
+  <div class="instructions">
+    <h3>Cara Bermain</h3>
+    <div class="inst-text">
+      Arahkan kamera ke semua peserta (~20 anak).<br>
+      Anak-anak berdiri dalam <strong>dua kelompok: KIRI dan KANAN</strong>.<br>
+      Bergerak di kelompok <strong>kiri</strong> → kapal bergeser ke kiri, dan sebaliknya.<br>
+      <strong>Hindari rintangan</strong> yang datang dari depan! Jangan sampai kapal tenggelam!
+    </div>
+  </div>
+</div>
+
+<!-- Game Over Overlay -->
+<div class="overlay" id="overlay">
+  <div class="popup-box">
+    <h2 id="overTitle">Kapal Tenggelam! &#9875;</h2>
+    <div class="result-text" id="overScore">Jarak tempuh: 0 meter</div>
+    <div class="result-sub" id="overSub"></div>
+    <button class="btn btn-start" onclick="resetGame()">Main Lagi</button>
+  </div>
+</div>
+
+<script>
+(function() {
+  // ============ CONFIG ============
+  var CW = 800, CH = 500;
+  var DETECTION_FPS = 15;
+  var PIXEL_DIFF_THRESHOLD = 30;
+  var CAM_W = 160, CAM_H = 120;
+  var SMOOTHING = 0.7;
+  var MAX_LIVES = 3;
+  var INVINCIBLE_MS = 2000;
+  var SINK_DURATION = 2000;
+  var SHIP_Y_RATIO = 0.80;
+  var MAX_SHIP_SPEED = 5;
+  var SPEED_SCALE = 0.0008;
+  var INITIAL_SCROLL_SPEED = 2.5;
+  var MAX_SCROLL_SPEED = 5.0;
+  var INITIAL_SPAWN_INTERVAL = 2500;
+  var MIN_SPAWN_INTERVAL = 1000;
+  var COUNTDOWN_STEPS = 3;
+
+  // ============ STATE ============
+  var gameState = 'idle'; // idle, countdown, playing, sinking, gameover
+  var lives = MAX_LIVES;
+  var distance = 0;
+  var scrollSpeed = INITIAL_SCROLL_SPEED;
+  var spawnInterval = INITIAL_SPAWN_INTERVAL;
+  var elapsedTime = 0;
+  var lastSpeedBump = 0;
+  var invincibleUntil = 0;
+  var sinkStart = 0;
+  var sinkShipY = 0;
+  var sinkShipAngle = 0;
+
+  // Ship
+  var shipX = CW / 2;
+  var shipTilt = 0;
+  var smoothedVelocity = 0;
+
+  // Camera
+  var camStream = null;
+  var videoEl, detectCanvas, detectCtx;
+  var prevFrameData = null;
+  var detectionInterval = null;
+  var leftMotion = 0, rightMotion = 0;
+
+  // Obstacles
+  var obstacles = [];
+  var spawnTimer = null;
+  var obstacleTypes = ['rock'];
+
+  // Waves
+  var waveOffset = 0;
+  var waves = [];
+  for (var w = 0; w < 5; w++) {
+    waves.push({
+      y: 80 + w * 100,
+      amplitude: 8 + w * 3,
+      frequency: 0.015 - w * 0.002,
+      speed: 0.3 + w * 0.15,
+      alpha: 0.08 + w * 0.04,
+      phase: Math.random() * Math.PI * 2
+    });
+  }
+
+  // Wake particles
+  var wakeParticles = [];
+
+  // Game loop
+  var lastFrameTime = 0;
+  var animFrameId = null;
+  var gameCanvas, ctx;
+
+  // Audio
+  var audioCtx = null;
+
+  // ============ DOM ============
+  var gameWrapper = document.getElementById('gameWrapper');
+  gameCanvas = document.getElementById('gameCanvas');
+  ctx = gameCanvas.getContext('2d');
+  videoEl = document.getElementById('video');
+  var camPlaceholder = document.getElementById('camPlaceholder');
+  var camDot = document.getElementById('camDot');
+  var camLabel = document.getElementById('camLabel');
+  var btnStart = document.getElementById('btnStart');
+  var overlay = document.getElementById('overlay');
+  var overTitle = document.getElementById('overTitle');
+  var overScore = document.getElementById('overScore');
+  var overSub = document.getElementById('overSub');
+  var barLeft = document.getElementById('barLeft');
+  var barRight = document.getElementById('barRight');
+  var barValLeft = document.getElementById('barValLeft');
+  var barValRight = document.getElementById('barValRight');
+  var dirArrow = document.getElementById('dirArrow');
+  var dirLabel = document.getElementById('dirLabel');
+
+  // Off-screen detection canvas
+  detectCanvas = document.createElement('canvas');
+  detectCanvas.width = CAM_W;
+  detectCanvas.height = CAM_H;
+  detectCtx = detectCanvas.getContext('2d', { willReadFrequently: true });
+
+  // ============ AUDIO ============
+  function ensureAudio() {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+  }
+
+  function playBuzzer() {
+    ensureAudio();
+    var osc = audioCtx.createOscillator();
+    var g = audioCtx.createGain();
+    osc.type = 'square';
+    osc.frequency.value = 150;
+    g.gain.setValueAtTime(0.3, audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+    osc.connect(g); g.connect(audioCtx.destination);
+    osc.start(); osc.stop(audioCtx.currentTime + 0.4);
+  }
+
+  function playGameOverSound() {
+    ensureAudio();
+    var osc = audioCtx.createOscillator();
+    var g = audioCtx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+    osc.frequency.linearRampToValueAtTime(100, audioCtx.currentTime + 1);
+    g.gain.setValueAtTime(0.3, audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1);
+    osc.connect(g); g.connect(audioCtx.destination);
+    osc.start(); osc.stop(audioCtx.currentTime + 1);
+  }
+
+  function playHighScoreSound() {
+    ensureAudio();
+    var notes = [261.6, 329.6, 392.0, 523.3]; // C E G C
+    for (var i = 0; i < notes.length; i++) {
+      (function(idx) {
+        var osc = audioCtx.createOscillator();
+        var g = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = notes[idx];
+        var t = audioCtx.currentTime + idx * 0.15;
+        g.gain.setValueAtTime(0.25, t);
+        g.gain.exponentialRampToValueAtTime(0.01, t + 0.14);
+        osc.connect(g); g.connect(audioCtx.destination);
+        osc.start(t); osc.stop(t + 0.14);
+      })(i);
+    }
+  }
+
+  // ============ CAMERA ============
+  async function initCamera() {
+    try {
+      camStream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'user', width: { ideal: 320 }, height: { ideal: 240 } }
+      });
+      videoEl.srcObject = camStream;
+      await videoEl.play();
+      camPlaceholder.style.display = 'none';
+      camDot.className = 'cam-dot active';
+      camLabel.textContent = 'Kamera aktif';
+      return true;
+    } catch(e) {
+      camDot.className = 'cam-dot error';
+      camLabel.textContent = 'Kamera gagal';
+      alert('Tidak bisa mengakses kamera. Pastikan izin kamera diberikan.');
+      return false;
+    }
+  }
+
+  function startDetection() {
+    prevFrameData = null;
+    if (detectionInterval) clearInterval(detectionInterval);
+    detectionInterval = setInterval(cameraDetectLoop, 1000 / DETECTION_FPS);
+  }
+
+  function stopDetection() {
+    if (detectionInterval) { clearInterval(detectionInterval); detectionInterval = null; }
+    prevFrameData = null;
+    leftMotion = 0; rightMotion = 0;
+    smoothedVelocity = 0;
+  }
+
+  function cameraDetectLoop() {
+    if (!videoEl.videoWidth) return;
+
+    detectCtx.drawImage(videoEl, 0, 0, CAM_W, CAM_H);
+    var currentData = detectCtx.getImageData(0, 0, CAM_W, CAM_H);
+
+    if (!prevFrameData) {
+      prevFrameData = currentData;
+      return;
+    }
+
+    var curr = currentData.data;
+    var prev = prevFrameData.data;
+    var halfW = Math.floor(CAM_W / 2);
+    var leftChanged = 0, rightChanged = 0;
+    var leftTotal = halfW * CAM_H;
+    var rightTotal = (CAM_W - halfW) * CAM_H;
+
+    for (var y = 0; y < CAM_H; y++) {
+      for (var x = 0; x < CAM_W; x++) {
+        var i = (y * CAM_W + x) * 4;
+        var dr = Math.abs(curr[i] - prev[i]);
+        var dg = Math.abs(curr[i + 1] - prev[i + 1]);
+        var db = Math.abs(curr[i + 2] - prev[i + 2]);
+        if ((dr + dg + db) / 3 > PIXEL_DIFF_THRESHOLD) {
+          if (x < halfW) {
+            leftChanged++;
+          } else {
+            rightChanged++;
+          }
+        }
+      }
+    }
+
+    prevFrameData = currentData;
+
+    // Raw motion percentages
+    // Raw left pixels = user's RIGHT (camera mirrors), raw right = user's LEFT
+    // So rawRightPct moving → user's LEFT group is moving → ship should go left (negative)
+    var rawLeftPct = (leftChanged / leftTotal) * 100;
+    var rawRightPct = (rightChanged / rightTotal) * 100;
+
+    leftMotion = rawRightPct;   // user's LEFT group (right in raw camera)
+    rightMotion = rawLeftPct;   // user's RIGHT group (left in raw camera)
+
+    // Positive = ship goes right, negative = ship goes left
+    var rawVelocity = (rightMotion - leftMotion) * SPEED_SCALE * 100;
+    // Clamp
+    rawVelocity = Math.max(-MAX_SHIP_SPEED, Math.min(MAX_SHIP_SPEED, rawVelocity));
+    // Exponential smoothing
+    smoothedVelocity = smoothedVelocity * SMOOTHING + rawVelocity * (1 - SMOOTHING);
+
+    // Update UI bars
+    var lPct = Math.min(100, leftMotion).toFixed(0);
+    var rPct = Math.min(100, rightMotion).toFixed(0);
+    barLeft.style.width = lPct + '%';
+    barRight.style.width = rPct + '%';
+    barValLeft.textContent = lPct;
+    barValRight.textContent = rPct;
+
+    // Direction indicator
+    if (Math.abs(smoothedVelocity) < 0.3) {
+      dirArrow.className = 'direction-arrow';
+      dirArrow.innerHTML = '&#9632;';
+      dirLabel.textContent = 'DIAM';
+    } else if (smoothedVelocity > 0) {
+      dirArrow.className = 'direction-arrow go-left';
+      dirArrow.innerHTML = '&#9654;';
+      dirLabel.textContent = 'KIRI';
+    } else {
+      dirArrow.className = 'direction-arrow go-right';
+      dirArrow.innerHTML = '&#9654;';
+      dirLabel.textContent = 'KANAN';
+    }
+  }
+
+  // ============ OBSTACLES ============
+  function spawnObstacle() {
+    if (gameState !== 'playing') return;
+
+    var types = obstacleTypes.slice();
+    var type = types[Math.floor(Math.random() * types.length)];
+    var radius;
+
+    switch(type) {
+      case 'rock':
+        radius = 22 + Math.random() * 8;
+        break;
+      case 'monster':
+        radius = 35 + Math.random() * 10;
+        break;
+      case 'whirlpool':
+        radius = 30 + Math.random() * 10;
+        break;
+      case 'serpent':
+        radius = 28 + Math.random() * 8;
+        break;
+      case 'wave':
+        // Wave spans the screen with a gap — handled specially
+        var gapWidth = 100 + Math.random() * 60; // gap 100-160px
+        var gapX = gapWidth / 2 + 30 + Math.random() * (CW - gapWidth - 60);
+        obstacles.push({
+          type: 'wave',
+          x: gapX,
+          y: -50,
+          radius: 0,
+          gapWidth: gapWidth,
+          gapX: gapX,
+          waveHeight: 40,
+          angle: 0,
+          bobPhase: Math.random() * Math.PI * 2
+        });
+        scheduleSpawn();
+        return;
+      default:
+        radius = 25;
+    }
+
+    var margin = radius + 20;
+    var x = margin + Math.random() * (CW - margin * 2);
+
+    obstacles.push({
+      type: type,
+      x: x,
+      y: -radius - 10,
+      radius: radius,
+      angle: 0,
+      bobPhase: Math.random() * Math.PI * 2,
+      serpentPhase: Math.random() * Math.PI * 2
+    });
+
+    // Schedule next spawn
+    scheduleSpawn();
+  }
+
+  function scheduleSpawn() {
+    if (gameState !== 'playing') return;
+    var jitter = (Math.random() - 0.5) * spawnInterval * 0.3;
+    spawnTimer = setTimeout(spawnObstacle, spawnInterval + jitter);
+  }
+
+  // ============ DRAWING ============
+  function drawSea(t) {
+    // Gradient background
+    var grad = ctx.createLinearGradient(0, 0, 0, CH);
+    grad.addColorStop(0, '#0A1628');
+    grad.addColorStop(0.5, '#0D2B4B');
+    grad.addColorStop(1, '#0E4040');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, CW, CH);
+
+    // Animated wave lines
+    for (var w = 0; w < waves.length; w++) {
+      var wave = waves[w];
+      var wy = wave.y + waveOffset * (0.3 + w * 0.15);
+      // Wrap wave y
+      wy = ((wy % CH) + CH) % CH;
+
+      ctx.beginPath();
+      ctx.strokeStyle = 'rgba(100,200,255,' + wave.alpha + ')';
+      ctx.lineWidth = 1.5;
+      for (var x = 0; x <= CW; x += 4) {
+        var sy = wy + Math.sin(x * wave.frequency + t * wave.speed + wave.phase) * wave.amplitude;
+        if (x === 0) ctx.moveTo(x, sy);
+        else ctx.lineTo(x, sy);
+      }
+      ctx.stroke();
+    }
+  }
+
+  function drawWakeParticles() {
+    for (var i = wakeParticles.length - 1; i >= 0; i--) {
+      var p = wakeParticles[i];
+      p.life -= 0.02;
+      if (p.life <= 0) { wakeParticles.splice(i, 1); continue; }
+      p.y += p.vy;
+      p.x += p.vx;
+      ctx.beginPath();
+      ctx.fillStyle = 'rgba(255,255,255,' + (p.life * 0.4) + ')';
+      ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  function addWakeParticles(sx, sy) {
+    for (var i = 0; i < 2; i++) {
+      wakeParticles.push({
+        x: sx + (Math.random() - 0.5) * 20,
+        y: sy + 5 + Math.random() * 5,
+        vx: (Math.random() - 0.5) * 0.5,
+        vy: 1 + Math.random() * 0.5,
+        size: 3 + Math.random() * 3,
+        life: 1
+      });
+    }
+  }
+
+  function drawShip(sx, sy, tilt, alpha, sinkAngle) {
+    ctx.save();
+    ctx.translate(sx, sy);
+    ctx.rotate((tilt * Math.PI / 180) + (sinkAngle || 0));
+    ctx.globalAlpha = alpha;
+
+    // Wake V-shape
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(0, 15);
+    ctx.lineTo(-25, 45);
+    ctx.lineTo(25, 45);
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(255,255,255,0.08)';
+    ctx.fill();
+    ctx.restore();
+
+    // Hull shadow
+    ctx.beginPath();
+    ctx.ellipse(0, 12, 38, 16, 0, 0, Math.PI * 2);
+    ctx.fillStyle = '#4E342E';
+    ctx.fill();
+
+    // Hull main
+    ctx.beginPath();
+    ctx.ellipse(0, 8, 35, 14, 0, 0, Math.PI * 2);
+    ctx.fillStyle = '#6D4C41';
+    ctx.fill();
+    ctx.strokeStyle = '#5D4037';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    // Hull planks
+    ctx.strokeStyle = 'rgba(78,52,46,0.5)';
+    ctx.lineWidth = 0.8;
+    for (var p = -20; p <= 20; p += 10) {
+      ctx.beginPath();
+      ctx.moveTo(p, -4);
+      ctx.lineTo(p, 18);
+      ctx.stroke();
+    }
+
+    // Hull top highlight
+    ctx.beginPath();
+    ctx.ellipse(0, 4, 32, 8, 0, Math.PI, Math.PI * 2);
+    ctx.fillStyle = '#8D6E63';
+    ctx.fill();
+
+    // Mast
+    ctx.fillStyle = '#5D4037';
+    ctx.fillRect(-2, -55, 4, 60);
+
+    // Sail
+    ctx.beginPath();
+    ctx.moveTo(2, -52);
+    ctx.lineTo(2, -10);
+    ctx.lineTo(28, -25);
+    ctx.closePath();
+    ctx.fillStyle = '#2E7D32';
+    ctx.fill();
+    ctx.strokeStyle = '#FFD700';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Crescent on sail
+    ctx.fillStyle = '#FFD700';
+    ctx.font = 'bold 14px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('\u262A', 12, -30);
+
+    ctx.globalAlpha = 1;
+    ctx.restore();
+  }
+
+  function drawObstacle(obs, t) {
+    ctx.save();
+    ctx.translate(obs.x, obs.y);
+
+    switch(obs.type) {
+      case 'rock':
+        // Gray rock with crack lines
+        ctx.beginPath();
+        ctx.ellipse(0, 0, obs.radius, obs.radius * 0.75, 0, 0, Math.PI * 2);
+        ctx.fillStyle = '#607D8B';
+        ctx.fill();
+        ctx.strokeStyle = '#455A64';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // Smaller highlight
+        ctx.beginPath();
+        ctx.ellipse(-4, -4, obs.radius * 0.6, obs.radius * 0.45, -0.3, 0, Math.PI * 2);
+        ctx.fillStyle = '#78909C';
+        ctx.fill();
+
+        // Crack lines
+        ctx.strokeStyle = '#37474F';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(-5, -5);
+        ctx.lineTo(3, 2);
+        ctx.lineTo(-2, 8);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(5, -3);
+        ctx.lineTo(10, 5);
+        ctx.stroke();
+        break;
+
+      case 'monster':
+        // Green/purple blob that bobs
+        var bob = Math.sin(t * 3 + obs.bobPhase) * 5;
+        ctx.translate(0, bob);
+
+        // Body
+        ctx.beginPath();
+        ctx.ellipse(0, 0, obs.radius, obs.radius * 0.8, 0, 0, Math.PI * 2);
+        var monGrad = ctx.createRadialGradient(0, 0, 5, 0, 0, obs.radius);
+        monGrad.addColorStop(0, '#7B1FA2');
+        monGrad.addColorStop(1, '#1B5E20');
+        ctx.fillStyle = monGrad;
+        ctx.fill();
+
+        // Bumps
+        for (var b = 0; b < 5; b++) {
+          var bAngle = (b / 5) * Math.PI * 2 + t * 0.5;
+          var bx = Math.cos(bAngle) * obs.radius * 0.75;
+          var by = Math.sin(bAngle) * obs.radius * 0.6;
+          ctx.beginPath();
+          ctx.arc(bx, by, 6, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(76,175,80,0.5)';
+          ctx.fill();
+        }
+
+        // Eyes
+        ctx.fillStyle = '#FFEB3B';
+        ctx.beginPath(); ctx.arc(-10, -5, 6, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(10, -5, 6, 0, Math.PI * 2); ctx.fill();
+        // Pupils
+        ctx.fillStyle = '#212121';
+        ctx.beginPath(); ctx.arc(-9, -4, 3, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(11, -4, 3, 0, Math.PI * 2); ctx.fill();
+        break;
+
+      case 'whirlpool':
+        // Concentric rotating arcs
+        obs.angle += 0.04;
+        for (var r = 3; r >= 0; r--) {
+          var arcRadius = 8 + r * 8;
+          var alpha = 0.3 + r * 0.15;
+          ctx.beginPath();
+          ctx.arc(0, 0, arcRadius, obs.angle + r * 0.5, obs.angle + r * 0.5 + Math.PI * 1.3);
+          ctx.strokeStyle = 'rgba(66,165,245,' + alpha + ')';
+          ctx.lineWidth = 4;
+          ctx.stroke();
+        }
+        // Center
+        ctx.beginPath();
+        ctx.arc(0, 0, 5, 0, Math.PI * 2);
+        ctx.fillStyle = '#1565C0';
+        ctx.fill();
+        break;
+
+      case 'serpent':
+        // Sea serpent — snaking body with head
+        var segCount = 6;
+        var segSpacing = 14;
+        // Draw body segments back to front
+        for (var s = segCount - 1; s >= 0; s--) {
+          var segY = s * segSpacing;
+          var segX = Math.sin((obs.y + segY) * 0.015 + obs.serpentPhase) * 20 - Math.sin(obs.y * 0.015 + obs.serpentPhase) * 20;
+          var segR = s === 0 ? obs.radius * 0.5 : obs.radius * (0.35 - s * 0.03);
+          var segColor = s === 0 ? '#C62828' : (s % 2 === 0 ? '#2E7D32' : '#388E3C');
+          ctx.beginPath();
+          ctx.arc(segX, segY, Math.max(4, segR), 0, Math.PI * 2);
+          ctx.fillStyle = segColor;
+          ctx.fill();
+          ctx.strokeStyle = '#1B5E20';
+          ctx.lineWidth = 1;
+          ctx.stroke();
+        }
+        // Head details
+        ctx.fillStyle = '#FFEB3B';
+        ctx.beginPath(); ctx.arc(-5, -4, 3.5, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(5, -4, 3.5, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#212121';
+        ctx.beginPath(); ctx.arc(-4.5, -3.5, 1.8, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(5.5, -3.5, 1.8, 0, Math.PI * 2); ctx.fill();
+        // Tongue
+        ctx.strokeStyle = '#F44336';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(0, -obs.radius * 0.5 - 2);
+        ctx.lineTo(-3, -obs.radius * 0.5 - 10);
+        ctx.moveTo(0, -obs.radius * 0.5 - 2);
+        ctx.lineTo(3, -obs.radius * 0.5 - 10);
+        ctx.stroke();
+        break;
+    }
+
+    // Wave is drawn differently — full width, not translated to obs.x
+    ctx.restore();
+  }
+
+  function drawWaveObstacle(obs, t) {
+    ctx.save();
+    var halfH = obs.waveHeight / 2;
+    var halfGap = obs.gapWidth / 2;
+    var gapLeft = obs.gapX - halfGap;
+    var gapRight = obs.gapX + halfGap;
+
+    // Left wall of water
+    var grad1 = ctx.createLinearGradient(0, obs.y - halfH, 0, obs.y + halfH);
+    grad1.addColorStop(0, 'rgba(21,101,192,0.15)');
+    grad1.addColorStop(0.3, 'rgba(30,136,229,0.7)');
+    grad1.addColorStop(0.5, 'rgba(66,165,245,0.85)');
+    grad1.addColorStop(0.7, 'rgba(30,136,229,0.7)');
+    grad1.addColorStop(1, 'rgba(21,101,192,0.15)');
+
+    // Left wall
+    ctx.fillStyle = grad1;
+    ctx.beginPath();
+    ctx.moveTo(0, obs.y - halfH);
+    // Wavy top edge
+    for (var wx = 0; wx <= gapLeft; wx += 4) {
+      var wy = obs.y - halfH + Math.sin(wx * 0.06 + t * 3) * 5;
+      ctx.lineTo(wx, wy);
+    }
+    ctx.lineTo(gapLeft, obs.y + halfH);
+    ctx.lineTo(0, obs.y + halfH);
+    ctx.closePath();
+    ctx.fill();
+
+    // Right wall
+    ctx.beginPath();
+    ctx.moveTo(CW, obs.y - halfH);
+    for (var wx2 = CW; wx2 >= gapRight; wx2 -= 4) {
+      var wy2 = obs.y - halfH + Math.sin(wx2 * 0.06 + t * 3) * 5;
+      ctx.lineTo(wx2, wy2);
+    }
+    ctx.lineTo(gapRight, obs.y + halfH);
+    ctx.lineTo(CW, obs.y + halfH);
+    ctx.closePath();
+    ctx.fill();
+
+    // Foam/crest on top edges
+    ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (var fx = 0; fx <= gapLeft; fx += 4) {
+      var fy = obs.y - halfH + Math.sin(fx * 0.06 + t * 3) * 5;
+      if (fx === 0) ctx.moveTo(fx, fy); else ctx.lineTo(fx, fy);
+    }
+    ctx.stroke();
+    ctx.beginPath();
+    for (var fx2 = gapRight; fx2 <= CW; fx2 += 4) {
+      var fy2 = obs.y - halfH + Math.sin(fx2 * 0.06 + t * 3) * 5;
+      if (fx2 === gapRight) ctx.moveTo(fx2, fy2); else ctx.lineTo(fx2, fy2);
+    }
+    ctx.stroke();
+
+    // Gap markers — subtle arrows/sparkles to hint at the opening
+    ctx.fillStyle = 'rgba(255,215,0,0.4)';
+    ctx.font = 'bold 16px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    var sparkle = Math.sin(t * 5) > 0 ? '\u2726' : '\u2727';
+    ctx.fillText(sparkle, obs.gapX, obs.y);
+
+    ctx.restore();
+  }
+
+  function drawHUD() {
+    // Lives
+    ctx.font = '22px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    var heartsStr = '';
+    for (var i = 0; i < MAX_LIVES; i++) {
+      heartsStr += i < lives ? '\u2764\uFE0F' : '\uD83D\uDDA4';
+    }
+    ctx.fillStyle = '#fff';
+    ctx.fillText(heartsStr, 16, 14);
+
+    // Distance
+    ctx.textAlign = 'right';
+    ctx.font = 'bold 18px sans-serif';
+    ctx.fillStyle = '#FFD740';
+    ctx.fillText('Jarak: ' + Math.floor(distance) + ' m', CW - 16, 16);
+  }
+
+  function drawCountdown(number) {
+    ctx.fillStyle = 'rgba(0,0,0,0.5)';
+    ctx.fillRect(0, 0, CW, CH);
+    ctx.font = 'bold 120px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#FFD700';
+    ctx.fillText(number, CW / 2, CH / 2);
+  }
+
+  function drawIdleOverlay() {
+    // Semi-transparent overlay with text
+    ctx.fillStyle = 'rgba(0,0,0,0.35)';
+    ctx.fillRect(0, 0, CW, CH);
+
+    ctx.font = 'bold 32px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#FFD700';
+    ctx.fillText('Tekan "Mulai" untuk bermain', CW / 2, CH / 2 - 10);
+    ctx.font = '18px sans-serif';
+    ctx.fillStyle = '#A5D6A7';
+    ctx.fillText('\u2693 Nahkoda Cilik \u2693', CW / 2, CH / 2 + 30);
+  }
+
+  // ============ GAME LOOP ============
+  var countdownValue = 0;
+  var countdownTimer = null;
+
+  function gameLoop(timestamp) {
+    if (!lastFrameTime) lastFrameTime = timestamp;
+    var dt = Math.min(timestamp - lastFrameTime, 50);
+    lastFrameTime = timestamp;
+    var t = timestamp / 1000;
+
+    // === UPDATE ===
+    if (gameState === 'playing') {
+      // Update elapsed time
+      elapsedTime += dt;
+      var elapsedSec = elapsedTime / 1000;
+
+      // Update distance
+      distance += scrollSpeed * dt * 0.02;
+
+      // Wave scroll
+      waveOffset += scrollSpeed * dt * 0.05;
+
+      // Difficulty progression
+      // Speed bump every 30s
+      var speedBumpCount = Math.floor(elapsedSec / 30);
+      if (speedBumpCount > lastSpeedBump) {
+        lastSpeedBump = speedBumpCount;
+        scrollSpeed = Math.min(MAX_SCROLL_SPEED, scrollSpeed * 1.1);
+      }
+      // Spawn interval decreases over time
+      var progress = Math.min(1, elapsedSec / 180); // 3 minutes to max
+      spawnInterval = INITIAL_SPAWN_INTERVAL - (INITIAL_SPAWN_INTERVAL - MIN_SPAWN_INTERVAL) * progress;
+
+      // Unlock obstacle types
+      if (elapsedSec >= 20 && obstacleTypes.indexOf('serpent') === -1) {
+        obstacleTypes.push('serpent');
+      }
+      if (elapsedSec >= 30 && obstacleTypes.indexOf('monster') === -1) {
+        obstacleTypes.push('monster');
+      }
+      if (elapsedSec >= 45 && obstacleTypes.indexOf('wave') === -1) {
+        obstacleTypes.push('wave');
+      }
+      if (elapsedSec >= 60 && obstacleTypes.indexOf('whirlpool') === -1) {
+        obstacleTypes.push('whirlpool');
+      }
+
+      // Move ship
+      shipX += smoothedVelocity;
+      shipX = Math.max(40, Math.min(CW - 40, shipX));
+
+      // Ship tilt
+      var targetTilt = (smoothedVelocity / MAX_SHIP_SPEED) * 15;
+      shipTilt += (targetTilt - shipTilt) * 0.15;
+
+      // Update obstacles
+      for (var i = obstacles.length - 1; i >= 0; i--) {
+        var obs = obstacles[i];
+        obs.y += scrollSpeed * dt * 0.06;
+
+        // Serpent weave motion
+        if (obs.type === 'serpent') {
+          obs.x += Math.cos(obs.y * 0.015 + obs.serpentPhase) * 1.2;
+        }
+
+        // Remove if off screen
+        var offScreenMargin = obs.type === 'wave' ? obs.waveHeight + 20 : obs.radius + 20;
+        if (obs.y > CH + offScreenMargin) {
+          obstacles.splice(i, 1);
+          continue;
+        }
+
+        // Collision check
+        if (timestamp < invincibleUntil) continue;
+        var shipCollisionY = CH * SHIP_Y_RATIO;
+        var shipRadius = 22;
+        var hit = false;
+
+        if (obs.type === 'wave') {
+          // Wave collision: ship must be inside the gap
+          var dy = shipCollisionY - obs.y;
+          if (Math.abs(dy) < obs.waveHeight / 2 + shipRadius - 6) {
+            // Ship is at wave's Y band — check if inside gap
+            var halfGap = obs.gapWidth / 2;
+            if (shipX < obs.gapX - halfGap + 8 || shipX > obs.gapX + halfGap - 8) {
+              hit = true;
+            }
+          }
+        } else {
+          // Circle-based collision for all other types
+          var dx = shipX - obs.x;
+          var dy2 = shipCollisionY - obs.y;
+          var dist = Math.sqrt(dx * dx + dy2 * dy2);
+          if (dist < shipRadius + obs.radius - 8) {
+            hit = true;
+          }
+        }
+
+        if (hit) {
+          obstacles.splice(i, 1);
+          lives--;
+          invincibleUntil = timestamp + INVINCIBLE_MS;
+          playBuzzer();
+          gameWrapper.classList.add('shake');
+          setTimeout(function() { gameWrapper.classList.remove('shake'); }, 400);
+
+          if (lives <= 0) {
+            // Start sinking
+            gameState = 'sinking';
+            sinkStart = timestamp;
+            sinkShipY = 0;
+            sinkShipAngle = 0;
+            if (spawnTimer) { clearTimeout(spawnTimer); spawnTimer = null; }
+            playGameOverSound();
+          }
+        }
+      }
+
+      // Add wake particles
+      if (Math.random() < 0.4) {
+        addWakeParticles(shipX, CH * SHIP_Y_RATIO + 15);
+      }
+    }
+
+    if (gameState === 'sinking') {
+      var sinkProgress = Math.min(1, (timestamp - sinkStart) / SINK_DURATION);
+      sinkShipY = sinkProgress * 80;
+      sinkShipAngle = sinkProgress * (30 * Math.PI / 180);
+      waveOffset += INITIAL_SCROLL_SPEED * dt * 0.05;
+
+      if (sinkProgress >= 1) {
+        gameState = 'gameover';
+        showGameOver();
+      }
+    }
+
+    // === RENDER ===
+    drawSea(t);
+    drawWakeParticles();
+
+    // Draw obstacles
+    for (var j = 0; j < obstacles.length; j++) {
+      if (obstacles[j].type === 'wave') {
+        drawWaveObstacle(obstacles[j], t);
+      } else {
+        drawObstacle(obstacles[j], t);
+      }
+    }
+
+    // Draw ship
+    if (gameState === 'playing' || gameState === 'countdown') {
+      var shipAlpha = 1;
+      if (timestamp < invincibleUntil) {
+        // Blink effect
+        shipAlpha = Math.sin(timestamp * 0.02) > 0 ? 1 : 0.3;
+      }
+      drawShip(shipX, CH * SHIP_Y_RATIO, shipTilt, shipAlpha, 0);
+    } else if (gameState === 'sinking') {
+      var sinkAlpha = 1 - (timestamp - sinkStart) / SINK_DURATION;
+      drawShip(shipX, CH * SHIP_Y_RATIO + sinkShipY, shipTilt, Math.max(0, sinkAlpha), sinkShipAngle);
+    } else if (gameState === 'idle') {
+      // Draw idle ship gently bobbing
+      var idleBob = Math.sin(t * 1.5) * 4;
+      drawShip(CW / 2, CH * SHIP_Y_RATIO + idleBob, Math.sin(t * 0.8) * 3, 1, 0);
+    }
+
+    // HUD
+    if (gameState === 'playing' || gameState === 'sinking') {
+      drawHUD();
+    }
+
+    // Countdown overlay
+    if (gameState === 'countdown' && countdownValue > 0) {
+      drawCountdown(countdownValue);
+    } else if (gameState === 'countdown' && countdownValue === 0) {
+      ctx.fillStyle = 'rgba(0,0,0,0.4)';
+      ctx.fillRect(0, 0, CW, CH);
+      ctx.font = 'bold 60px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = '#69F0AE';
+      ctx.fillText('MULAI!', CW / 2, CH / 2);
+    }
+
+    // Idle overlay
+    if (gameState === 'idle') {
+      drawIdleOverlay();
+    }
+
+    animFrameId = requestAnimationFrame(gameLoop);
+  }
+
+  // ============ COUNTDOWN ============
+  function startCountdown(step) {
+    gameState = 'countdown';
+    countdownValue = step;
+    if (step > 0) {
+      countdownTimer = setTimeout(function() { startCountdown(step - 1); }, 800);
+    } else {
+      countdownTimer = setTimeout(function() {
+        gameState = 'playing';
+        countdownValue = -1;
+        scheduleSpawn();
+      }, 600);
+    }
+  }
+
+  // ============ GAME OVER ============
+  function showGameOver() {
+    stopDetection();
+    if (spawnTimer) { clearTimeout(spawnTimer); spawnTimer = null; }
+
+    var meters = Math.floor(distance);
+    overScore.textContent = 'Jarak tempuh: ' + meters + ' meter';
+
+    if (meters >= 500) {
+      overTitle.textContent = 'Luar Biasa! \u2693';
+      overSub.textContent = 'Kalian nahkoda yang hebat!';
+      spawnConfetti();
+      playHighScoreSound();
+    } else {
+      overTitle.textContent = 'Kapal Tenggelam! \u2693';
+      overSub.textContent = 'Coba lagi untuk berlayar lebih jauh!';
+    }
+
+    overlay.classList.add('show');
+  }
+
+  function spawnConfetti() {
+    var colors = ['#FFD700','#4CAF50','#2196F3','#FF5722','#9C27B0','#FFC107','#E91E63'];
+    for (var i = 0; i < 50; i++) {
+      var piece = document.createElement('div');
+      piece.className = 'confetti-piece';
+      piece.style.left = Math.random() * 100 + 'vw';
+      piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+      piece.style.animationDelay = (Math.random() * 2) + 's';
+      piece.style.animationDuration = (2 + Math.random() * 2) + 's';
+      piece.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
+      document.body.appendChild(piece);
+      setTimeout(function() { piece.remove(); }, 5000);
+    }
+  }
+
+  // ============ GAME CONTROLS ============
+  window.startGame = async function() {
+    if (gameState === 'playing' || gameState === 'countdown') return;
+    btnStart.disabled = true;
+
+    if (!camStream) {
+      var ok = await initCamera();
+      if (!ok) { btnStart.disabled = false; return; }
+    }
+
+    ensureAudio();
+
+    // Reset state
+    lives = MAX_LIVES;
+    distance = 0;
+    scrollSpeed = INITIAL_SCROLL_SPEED;
+    spawnInterval = INITIAL_SPAWN_INTERVAL;
+    elapsedTime = 0;
+    lastSpeedBump = 0;
+    invincibleUntil = 0;
+    shipX = CW / 2;
+    shipTilt = 0;
+    smoothedVelocity = 0;
+    obstacles = [];
+    wakeParticles = [];
+    obstacleTypes = ['rock'];
+    sinkStart = 0;
+    sinkShipY = 0;
+    sinkShipAngle = 0;
+    overlay.classList.remove('show');
+
+    // Start detection
+    startDetection();
+
+    // Start countdown
+    startCountdown(COUNTDOWN_STEPS);
+  };
+
+  window.resetGame = function() {
+    // Stop everything
+    gameState = 'idle';
+    if (countdownTimer) { clearTimeout(countdownTimer); countdownTimer = null; }
+    if (spawnTimer) { clearTimeout(spawnTimer); spawnTimer = null; }
+    stopDetection();
+
+    lives = MAX_LIVES;
+    distance = 0;
+    scrollSpeed = INITIAL_SCROLL_SPEED;
+    spawnInterval = INITIAL_SPAWN_INTERVAL;
+    elapsedTime = 0;
+    lastSpeedBump = 0;
+    invincibleUntil = 0;
+    shipX = CW / 2;
+    shipTilt = 0;
+    smoothedVelocity = 0;
+    obstacles = [];
+    wakeParticles = [];
+    obstacleTypes = ['rock'];
+    countdownValue = -1;
+
+    overlay.classList.remove('show');
+    btnStart.disabled = false;
+
+    barLeft.style.width = '0%';
+    barRight.style.width = '0%';
+    barValLeft.textContent = '0';
+    barValRight.textContent = '0';
+    dirArrow.className = 'direction-arrow';
+    dirArrow.innerHTML = '&#9632;';
+    dirLabel.textContent = '-';
+
+    document.querySelectorAll('.confetti-piece').forEach(function(p) { p.remove(); });
+  };
+
+  // ============ INIT ============
+  lastFrameTime = 0;
+  animFrameId = requestAnimationFrame(gameLoop);
+})();
+</script>
+
+</body>
+</html>

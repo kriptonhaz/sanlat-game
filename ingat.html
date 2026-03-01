@@ -1,0 +1,1063 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ikuti Jejak - Game Islami</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  @keyframes geometricBg{0%{background-position:0 0}100%{background-position:60px 60px}}
+  body{
+    font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;
+    background:linear-gradient(135deg,#0D3B0D 0%,#1B5E20 40%,#2E7D32 70%,#1B5E20 100%);
+    min-height:100vh;overflow-x:hidden;color:#fff;
+    background-size:cover;
+  }
+  body::before{
+    content:'';position:fixed;inset:0;opacity:.04;pointer-events:none;z-index:0;
+    background-image:
+      repeating-linear-gradient(0deg,transparent,transparent 28px,rgba(255,215,0,.3) 28px,rgba(255,215,0,.3) 30px),
+      repeating-linear-gradient(90deg,transparent,transparent 28px,rgba(255,215,0,.3) 28px,rgba(255,215,0,.3) 30px);
+    animation:geometricBg 4s linear infinite;
+  }
+  .container{max-width:900px;margin:0 auto;padding:10px 16px;position:relative;z-index:1}
+
+  .header{text-align:center;padding:14px 0 6px}
+  .header h1{
+    font-size:2.4em;font-weight:800;
+    background:linear-gradient(180deg,#FFD700 0%,#FFC107 50%,#FF8F00 100%);
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+    text-shadow:none;filter:drop-shadow(0 2px 4px rgba(0,0,0,.4));
+    letter-spacing:1px;
+  }
+  .header p{color:#A5D6A7;font-size:.9em;margin-top:2px}
+
+  /* Game Info Bar */
+  .game-info{
+    display:flex;align-items:center;justify-content:center;gap:20px;flex-wrap:wrap;
+    background:rgba(0,0,0,.35);border-radius:12px;padding:10px 20px;margin:8px 0;
+    border:1px solid rgba(255,255,255,.1);font-size:.95em;
+  }
+  .game-info .info-item{display:flex;align-items:center;gap:6px}
+  .game-info .info-label{color:#A5D6A7;font-size:.8em}
+  .game-info .info-value{color:#FFD740;font-weight:700}
+  .game-info .lives{font-size:1.2em;letter-spacing:2px}
+
+  /* Status Banner */
+  .status-banner{
+    text-align:center;margin:8px 0;padding:16px 20px;border-radius:14px;
+    font-size:1.5em;font-weight:800;letter-spacing:1px;
+    transition:all .3s ease;min-height:60px;
+    display:flex;align-items:center;justify-content:center;gap:12px;
+    background:rgba(0,0,0,.3);border:2px solid rgba(255,255,255,.1);color:#A5D6A7;
+  }
+  .status-banner.blue-phase{
+    background:linear-gradient(135deg,rgba(21,101,192,.5),rgba(66,165,245,.3));
+    border-color:rgba(66,165,245,.6);color:#90CAF9;
+    animation:glowBlue 1s ease-in-out infinite alternate;
+  }
+  .status-banner.gold-phase{
+    background:linear-gradient(135deg,rgba(255,160,0,.4),rgba(255,193,7,.2));
+    border-color:rgba(255,193,7,.5);color:#FFD740;
+    animation:glowGold .8s ease-in-out infinite alternate;
+  }
+  .status-banner.green-phase{
+    background:linear-gradient(135deg,rgba(46,125,50,.5),rgba(76,175,80,.3));
+    border-color:rgba(76,175,80,.6);color:#69F0AE;
+    animation:glowGreen 1s ease-in-out infinite alternate;
+  }
+  .status-banner.red-phase{
+    background:linear-gradient(135deg,rgba(198,40,40,.5),rgba(244,67,54,.3));
+    border-color:rgba(244,67,54,.6);color:#FF8A80;
+    animation:glowRed .5s ease-in-out infinite alternate;
+  }
+  .status-banner.countdown-phase{
+    background:rgba(0,0,0,.5);border-color:rgba(255,255,255,.3);color:#fff;font-size:2em;
+  }
+  @keyframes glowBlue{from{box-shadow:0 0 15px rgba(66,165,245,.2)}to{box-shadow:0 0 30px rgba(66,165,245,.5)}}
+  @keyframes glowGold{from{box-shadow:0 0 10px rgba(255,193,7,.2)}to{box-shadow:0 0 25px rgba(255,193,7,.4)}}
+  @keyframes glowGreen{from{box-shadow:0 0 15px rgba(76,175,80,.2)}to{box-shadow:0 0 30px rgba(76,175,80,.5)}}
+  @keyframes glowRed{from{box-shadow:0 0 15px rgba(244,67,54,.3)}to{box-shadow:0 0 35px rgba(244,67,54,.6)}}
+
+  /* Game Display */
+  .game-display{
+    position:relative;min-height:220px;
+    background:rgba(0,0,0,.4);border-radius:18px;
+    border:3px solid rgba(255,215,0,.15);
+    box-shadow:0 4px 30px rgba(0,0,0,.3);
+    margin:8px 0;display:flex;align-items:center;justify-content:center;
+    overflow:hidden;
+  }
+  .game-display .arrow-show{
+    font-size:8em;font-weight:900;line-height:1;
+    animation:arrowPop .35s ease;
+    text-shadow:0 4px 20px rgba(0,0,0,.5);
+  }
+  .game-display .arrow-show.left{color:#42A5F5}
+  .game-display .arrow-show.right{color:#FFD740}
+  @keyframes arrowPop{
+    0%{transform:scale(0);opacity:0}
+    60%{transform:scale(1.2)}
+    100%{transform:scale(1);opacity:1}
+  }
+  .game-display .step-info{
+    text-align:center;
+  }
+  .game-display .step-info .step-label{
+    font-size:1.3em;font-weight:700;color:#A5D6A7;margin-bottom:8px;
+  }
+  .game-display .step-info .step-waiting{
+    font-size:1em;color:#81C784;animation:fadeInOut 1.5s infinite;
+  }
+  @keyframes fadeInOut{0%,100%{opacity:.4}50%{opacity:1}}
+  .game-display .countdown-big{
+    font-size:6em;font-weight:900;color:#FFD700;
+    animation:arrowPop .35s ease;
+  }
+  .game-display .round-complete-text{
+    text-align:center;
+  }
+  .game-display .round-complete-text h2{
+    font-size:2em;color:#69F0AE;margin-bottom:4px;
+  }
+  .game-display .round-complete-text p{
+    font-size:1.1em;color:#A5D6A7;
+  }
+  .game-display .gameover-text{
+    text-align:center;
+  }
+  .game-display .gameover-text h2{
+    font-size:2.2em;
+    background:linear-gradient(180deg,#FFD700,#FF8F00);
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+    margin-bottom:8px;
+  }
+  .game-display .gameover-text .score{font-size:1.4em;color:#E8F5E9;margin-bottom:4px}
+  .game-display .gameover-text .sub{font-size:.95em;color:#A5D6A7}
+
+  /* Feedback flash overlay inside game display */
+  .game-display .feedback-flash{
+    position:absolute;inset:0;pointer-events:none;opacity:0;
+    transition:opacity .15s;border-radius:16px;
+  }
+  .game-display .feedback-flash.correct{
+    background:radial-gradient(ellipse at center,rgba(76,175,80,.5),rgba(76,175,80,.1));
+    opacity:1;
+  }
+  .game-display .feedback-flash.wrong{
+    background:radial-gradient(ellipse at center,rgba(244,67,54,.5),rgba(244,67,54,.1));
+    opacity:1;
+  }
+
+  /* Step Tracker Dots */
+  .step-tracker{
+    display:flex;justify-content:center;gap:8px;flex-wrap:wrap;
+    margin:8px 0;min-height:24px;
+  }
+  .step-dot{
+    width:18px;height:18px;border-radius:50%;
+    background:rgba(255,255,255,.15);border:2px solid rgba(255,255,255,.2);
+    transition:all .3s;
+  }
+  .step-dot.current{
+    background:rgba(255,193,7,.4);border-color:#FFD740;
+    animation:dotPulse 1s infinite;
+  }
+  .step-dot.correct{
+    background:rgba(76,175,80,.6);border-color:#69F0AE;
+  }
+  .step-dot.wrong{
+    background:rgba(244,67,54,.6);border-color:#FF8A80;
+  }
+  @keyframes dotPulse{0%,100%{box-shadow:0 0 0 0 rgba(255,193,7,.4)}50%{box-shadow:0 0 0 6px rgba(255,193,7,0)}}
+
+  /* Camera Panel (from kapal.html) */
+  .camera-panel{
+    display:flex;align-items:center;gap:14px;
+    background:rgba(0,0,0,.35);border-radius:14px;padding:12px 16px;margin:8px 0;
+    border:1px solid rgba(255,255,255,.1);
+    flex-wrap:wrap;justify-content:center;
+  }
+  .cam-feed-wrap{
+    position:relative;width:180px;aspect-ratio:4/3;border-radius:10px;overflow:hidden;
+    background:#000;border:2px solid rgba(255,255,255,.15);flex-shrink:0;
+  }
+  .cam-feed-wrap video{width:100%;height:100%;object-fit:cover;transform:scaleX(-1);display:block}
+  .cam-feed-wrap .divider-line{
+    position:absolute;top:0;bottom:0;left:50%;width:2px;
+    background:rgba(255,255,255,.6);z-index:2;
+  }
+  .cam-feed-wrap .side-label{
+    position:absolute;top:4px;font-size:.55em;font-weight:700;z-index:3;
+    color:rgba(255,255,255,.8);text-shadow:0 1px 3px rgba(0,0,0,.8);
+  }
+  .cam-feed-wrap .side-label.left-label{left:6px}
+  .cam-feed-wrap .side-label.right-label{right:6px}
+  .cam-placeholder{
+    position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    color:#666;font-size:.8em;flex-direction:column;gap:4px;
+  }
+  .cam-placeholder .cam-icon{font-size:2em;opacity:.4}
+
+  .motion-bars{
+    display:flex;flex-direction:column;gap:8px;flex:1;min-width:140px;
+  }
+  .motion-bar{
+    display:flex;align-items:center;gap:8px;
+  }
+  .motion-bar .bar-label{font-size:.7em;font-weight:700;width:50px;text-align:right}
+  .motion-bar .bar-track{
+    flex:1;height:18px;background:rgba(255,255,255,.08);border-radius:9px;overflow:hidden;
+    position:relative;
+  }
+  .motion-bar .bar-fill{
+    height:100%;border-radius:9px;transition:width .1s linear;width:0;
+  }
+  .bar-fill.left-fill{background:linear-gradient(90deg,#1565C0,#42A5F5)}
+  .bar-fill.right-fill{background:linear-gradient(90deg,#F9A825,#FFD740)}
+  .motion-bar .bar-value{
+    position:absolute;right:6px;top:50%;transform:translateY(-50%);
+    font-size:.6em;font-weight:700;color:rgba(255,255,255,.8);
+  }
+
+  .direction-indicator{
+    display:flex;flex-direction:column;align-items:center;gap:2px;min-width:50px;
+  }
+  .direction-arrow{
+    font-size:2em;font-weight:900;transition:all .2s;color:#555;
+  }
+  .direction-arrow.go-left{color:#42A5F5;transform:scaleX(-1)}
+  .direction-arrow.go-right{color:#FFD740}
+  .direction-label{font-size:.6em;color:#A5D6A7}
+
+  /* Sensitivity (from patung.html) */
+  .sensitivity-section{
+    background:rgba(0,0,0,.25);border-radius:12px;padding:12px 20px;margin:8px 0;
+    border:1px solid rgba(255,215,0,.1);
+  }
+  .sensitivity-section label{
+    font-size:.8em;color:#A5D6A7;display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;
+  }
+  .sensitivity-section label strong{color:#FFD740}
+  .sensitivity-section input[type=range]{
+    width:100%;height:6px;-webkit-appearance:none;appearance:none;
+    background:linear-gradient(90deg,#FF5252,#FFC107,#4CAF50);border-radius:3px;outline:none;
+  }
+  .sensitivity-section input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none;width:20px;height:20px;border-radius:50%;
+    background:linear-gradient(135deg,#FFD700,#FFC107);border:2px solid #fff;cursor:pointer;
+    box-shadow:0 2px 6px rgba(0,0,0,.3);
+  }
+  .sensitivity-section input[type=range]::-moz-range-thumb{
+    width:20px;height:20px;border-radius:50%;
+    background:linear-gradient(135deg,#FFD700,#FFC107);border:2px solid #fff;cursor:pointer;
+  }
+  .sensitivity-hint{font-size:.7em;color:#81C784;text-align:center;margin-top:4px}
+
+  /* Controls */
+  .controls{
+    display:flex;gap:12px;justify-content:center;align-items:center;flex-wrap:wrap;margin:8px 0;
+  }
+  .btn{
+    padding:12px 32px;border:none;border-radius:10px;font-size:1.05em;
+    font-weight:700;cursor:pointer;transition:all .2s;text-transform:uppercase;letter-spacing:1px;
+  }
+  .btn:active{transform:scale(.96)}
+  .btn-start{
+    background:linear-gradient(135deg,#FFD700,#FFC107);color:#1B5E20;
+    box-shadow:0 4px 15px rgba(255,215,0,.3);
+  }
+  .btn-start:hover{box-shadow:0 6px 20px rgba(255,215,0,.5)}
+  .btn-start:disabled{opacity:.5;cursor:not-allowed}
+  .btn-reset{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3)}
+  .btn-reset:hover{background:rgba(255,255,255,.25)}
+  .cam-status{
+    display:flex;align-items:center;gap:8px;padding:8px 18px;
+    border-radius:10px;background:rgba(0,0,0,.3);font-size:.9em;
+  }
+  .cam-dot{width:12px;height:12px;border-radius:50%;background:#666;transition:background .3s}
+  .cam-dot.active{background:#4CAF50;box-shadow:0 0 8px #4CAF50;animation:pulse 1.5s infinite}
+  .cam-dot.error{background:#f44336}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+
+  /* Instructions */
+  .instructions{
+    background:rgba(0,0,0,.25);border-radius:14px;padding:14px 20px;margin:8px 0;
+    border:1px solid rgba(255,215,0,.1);
+  }
+  .instructions h3{color:#FFD740;font-size:.95em;margin-bottom:8px;text-align:center}
+  .inst-text{font-size:.85em;color:#C8E6C9;text-align:center;line-height:1.6}
+
+  /* Confetti */
+  @keyframes confetti{0%{transform:translateY(-10px) rotate(0deg);opacity:1}100%{transform:translateY(100vh) rotate(720deg);opacity:0}}
+  .confetti-piece{position:fixed;width:10px;height:10px;top:-10px;z-index:101;animation:confetti 3s ease-in forwards}
+
+  @media(max-width:700px){
+    .header h1{font-size:1.8em}
+    .status-banner{font-size:1.2em;padding:10px 14px}
+    .game-display{min-height:170px}
+    .game-display .arrow-show{font-size:5em}
+    .btn{padding:10px 22px;font-size:.9em}
+    .cam-feed-wrap{width:140px}
+    .camera-panel{gap:10px;padding:10px}
+    .game-info{gap:12px;padding:8px 14px;font-size:.85em}
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <h1>Ikuti Jejak</h1>
+    <p>Hafal dan ikuti urutan gerakan!</p>
+  </div>
+
+  <!-- Game Info Bar -->
+  <div class="game-info">
+    <div class="info-item">
+      <span class="info-label">Ronde</span>
+      <span class="info-value" id="roundDisplay">-</span>
+    </div>
+    <div class="info-item">
+      <span class="lives" id="livesDisplay">&#10084;&#65039;&#10084;&#65039;&#10084;&#65039;</span>
+    </div>
+    <div class="info-item">
+      <span class="info-label">High Score</span>
+      <span class="info-value" id="highScoreDisplay">0</span>
+    </div>
+  </div>
+
+  <!-- Status Banner -->
+  <div class="status-banner" id="statusBanner">Tekan "Mulai" untuk bermain</div>
+
+  <!-- Game Display -->
+  <div class="game-display" id="gameDisplay">
+    <div class="feedback-flash" id="feedbackFlash"></div>
+    <div id="displayContent">
+      <div style="text-align:center;color:#666;font-size:1.2em">Siap bermain?</div>
+    </div>
+  </div>
+
+  <!-- Step Tracker Dots -->
+  <div class="step-tracker" id="stepTracker"></div>
+
+  <!-- Camera Panel -->
+  <div class="camera-panel">
+    <div class="cam-feed-wrap" id="camFeedWrap">
+      <video id="video" autoplay playsinline muted></video>
+      <div class="divider-line"></div>
+      <div class="side-label left-label">KIRI</div>
+      <div class="side-label right-label">KANAN</div>
+      <div class="cam-placeholder" id="camPlaceholder">
+        <div class="cam-icon">&#128247;</div>
+        <span>Kamera mati</span>
+      </div>
+    </div>
+    <div class="motion-bars">
+      <div class="motion-bar">
+        <div class="bar-label" style="color:#64B5F6">KIRI</div>
+        <div class="bar-track">
+          <div class="bar-fill left-fill" id="barLeft"></div>
+          <div class="bar-value" id="barValLeft">0</div>
+        </div>
+      </div>
+      <div class="motion-bar">
+        <div class="bar-label" style="color:#FFD740">KANAN</div>
+        <div class="bar-track">
+          <div class="bar-fill right-fill" id="barRight"></div>
+          <div class="bar-value" id="barValRight">0</div>
+        </div>
+      </div>
+    </div>
+    <div class="direction-indicator">
+      <div class="direction-arrow" id="dirArrow">&#9632;</div>
+      <div class="direction-label" id="dirLabel">-</div>
+    </div>
+  </div>
+
+  <!-- Sensitivity -->
+  <div class="sensitivity-section">
+    <label>
+      <span>Sensitivitas Gerakan</span>
+      <strong id="sensitivityValue">8%</strong>
+    </label>
+    <input type="range" id="sensitivitySlider" min="2" max="30" value="8">
+    <div class="sensitivity-hint">Rendah = sangat sensitif (gerakan kecil terdeteksi) &nbsp;|&nbsp; Tinggi = toleran</div>
+  </div>
+
+  <!-- Controls -->
+  <div class="controls">
+    <button class="btn btn-start" id="btnStart" onclick="startGame()">Mulai</button>
+    <button class="btn btn-reset" onclick="resetGame()">Ulangi</button>
+    <div class="cam-status">
+      <div class="cam-dot" id="camDot"></div>
+      <span id="camLabel">Kamera mati</span>
+    </div>
+  </div>
+
+  <!-- Instructions -->
+  <div class="instructions">
+    <h3>Cara Bermain</h3>
+    <div class="inst-text">
+      Arahkan kamera ke peserta yang terbagi <strong>dua kelompok: KIRI dan KANAN</strong>.<br>
+      Layar akan menampilkan <strong>urutan arah panah</strong> (kiri/kanan).<br>
+      Setelah urutan selesai, peserta harus <strong>mengikuti urutan</strong> dengan bergerak ke arah yang benar.<br>
+      Setiap ronde, urutan bertambah panjang. <strong>3 nyawa</strong> tersedia — salah arah = kehilangan 1 nyawa!<br>
+      Bertahan selama mungkin dan cetak skor tertinggi!
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  // ============ CONFIG ============
+  var DETECTION_FPS = 15;
+  var PIXEL_DIFF_THRESHOLD = 30;
+  var CAM_W = 160, CAM_H = 120;
+  var MAX_LIVES = 3;
+  var VOTE_WINDOW_MS = 400;       // ~6 frames at 15fps
+  var VOTE_RATIO = 1.5;           // dominant side must be 1.5x the other
+  var STEP_COOLDOWN_MS = 800;     // cooldown between steps
+  var STEP_TIMEOUT_MS = 3000;     // timeout per step
+  var BASE_ARROW_SPEED = 1000;    // ms per arrow in show phase (round 1)
+  var SPEED_DECAY = 0.95;         // per-round multiplier
+  var MIN_ARROW_SPEED = 600;
+  var LS_KEY = 'ikutiJejak_highScore';
+
+  // ============ STATE ============
+  var phase = 'idle'; // idle, countdown, showing, readying, repeating, feedback, roundComplete, gameOver
+  var round = 0;
+  var lives = MAX_LIVES;
+  var sequence = [];
+  var currentStep = 0;
+  var highScore = parseInt(localStorage.getItem(LS_KEY)) || 0;
+  var sensitivity = 8;
+
+  // Camera
+  var camStream = null;
+  var videoEl, detectCanvas, detectCtx;
+  var prevFrameData = null;
+  var detectionInterval = null;
+  var leftMotion = 0, rightMotion = 0;
+
+  // Vote accumulation
+  var voteFrames = [];
+  var lastStepTime = 0;
+  var stepTimeoutId = null;
+  var voteRegistered = false;
+
+  // Timers
+  var phaseTimeout = null;
+
+  // Audio
+  var audioCtx = null;
+
+  // ============ DOM ============
+  var statusBanner = document.getElementById('statusBanner');
+  var gameDisplay = document.getElementById('gameDisplay');
+  var displayContent = document.getElementById('displayContent');
+  var feedbackFlash = document.getElementById('feedbackFlash');
+  var stepTracker = document.getElementById('stepTracker');
+  var roundDisplay = document.getElementById('roundDisplay');
+  var livesDisplay = document.getElementById('livesDisplay');
+  var highScoreDisplay = document.getElementById('highScoreDisplay');
+  var btnStart = document.getElementById('btnStart');
+  var camDot = document.getElementById('camDot');
+  var camLabel = document.getElementById('camLabel');
+  var camPlaceholder = document.getElementById('camPlaceholder');
+  videoEl = document.getElementById('video');
+  var barLeft = document.getElementById('barLeft');
+  var barRight = document.getElementById('barRight');
+  var barValLeft = document.getElementById('barValLeft');
+  var barValRight = document.getElementById('barValRight');
+  var dirArrow = document.getElementById('dirArrow');
+  var dirLabel = document.getElementById('dirLabel');
+  var sensitivitySlider = document.getElementById('sensitivitySlider');
+  var sensitivityValueEl = document.getElementById('sensitivityValue');
+
+  detectCanvas = document.createElement('canvas');
+  detectCanvas.width = CAM_W;
+  detectCanvas.height = CAM_H;
+  detectCtx = detectCanvas.getContext('2d', { willReadFrequently: true });
+
+  highScoreDisplay.textContent = highScore;
+
+  // ============ SENSITIVITY ============
+  sensitivitySlider.addEventListener('input', function() {
+    sensitivity = parseInt(this.value);
+    sensitivityValueEl.textContent = sensitivity + '%';
+  });
+
+  // ============ AUDIO ============
+  function ensureAudio() {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+  }
+
+  function playArrowTone(dir) {
+    ensureAudio();
+    var freq = dir === 'left' ? 300 : 500;
+    var osc = audioCtx.createOscillator();
+    var g = audioCtx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = freq;
+    g.gain.setValueAtTime(0.25, audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+    osc.connect(g); g.connect(audioCtx.destination);
+    osc.start(); osc.stop(audioCtx.currentTime + 0.3);
+  }
+
+  function playCorrectDing() {
+    ensureAudio();
+    var osc = audioCtx.createOscillator();
+    var g = audioCtx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = 800;
+    g.gain.setValueAtTime(0.3, audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+    osc.connect(g); g.connect(audioCtx.destination);
+    osc.start(); osc.stop(audioCtx.currentTime + 0.15);
+  }
+
+  function playWrongBuzzer() {
+    ensureAudio();
+    var osc = audioCtx.createOscillator();
+    var g = audioCtx.createGain();
+    osc.type = 'square';
+    osc.frequency.value = 150;
+    g.gain.setValueAtTime(0.25, audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+    osc.connect(g); g.connect(audioCtx.destination);
+    osc.start(); osc.stop(audioCtx.currentTime + 0.5);
+  }
+
+  function playRoundFanfare() {
+    ensureAudio();
+    var notes = [523.3, 659.3, 784.0, 1046.5]; // C5 E5 G5 C6
+    for (var i = 0; i < notes.length; i++) {
+      (function(idx) {
+        var osc = audioCtx.createOscillator();
+        var g = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = notes[idx];
+        var t = audioCtx.currentTime + idx * 0.15;
+        g.gain.setValueAtTime(0.25, t);
+        g.gain.exponentialRampToValueAtTime(0.01, t + 0.14);
+        osc.connect(g); g.connect(audioCtx.destination);
+        osc.start(t); osc.stop(t + 0.14);
+      })(i);
+    }
+  }
+
+  function playGameOverSound() {
+    ensureAudio();
+    var osc = audioCtx.createOscillator();
+    var g = audioCtx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+    osc.frequency.linearRampToValueAtTime(100, audioCtx.currentTime + 1);
+    g.gain.setValueAtTime(0.3, audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1);
+    osc.connect(g); g.connect(audioCtx.destination);
+    osc.start(); osc.stop(audioCtx.currentTime + 1);
+  }
+
+  // ============ CAMERA ============
+  async function initCamera() {
+    try {
+      camStream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'user', width: { ideal: 320 }, height: { ideal: 240 } }
+      });
+      videoEl.srcObject = camStream;
+      await videoEl.play();
+      camPlaceholder.style.display = 'none';
+      camDot.className = 'cam-dot active';
+      camLabel.textContent = 'Kamera aktif';
+      return true;
+    } catch(e) {
+      camDot.className = 'cam-dot error';
+      camLabel.textContent = 'Kamera gagal';
+      alert('Tidak bisa mengakses kamera. Pastikan izin kamera diberikan.');
+      return false;
+    }
+  }
+
+  // ============ DETECTION ============
+  function startDetection() {
+    prevFrameData = null;
+    voteFrames = [];
+    if (detectionInterval) clearInterval(detectionInterval);
+    detectionInterval = setInterval(cameraDetectLoop, 1000 / DETECTION_FPS);
+  }
+
+  function stopDetection() {
+    if (detectionInterval) { clearInterval(detectionInterval); detectionInterval = null; }
+    prevFrameData = null;
+    leftMotion = 0; rightMotion = 0;
+    voteFrames = [];
+  }
+
+  function cameraDetectLoop() {
+    if (!videoEl.videoWidth) return;
+
+    detectCtx.drawImage(videoEl, 0, 0, CAM_W, CAM_H);
+    var currentData = detectCtx.getImageData(0, 0, CAM_W, CAM_H);
+
+    if (!prevFrameData) {
+      prevFrameData = currentData;
+      return;
+    }
+
+    var curr = currentData.data;
+    var prev = prevFrameData.data;
+    var halfW = Math.floor(CAM_W / 2);
+    var leftChanged = 0, rightChanged = 0;
+    var leftTotal = halfW * CAM_H;
+    var rightTotal = (CAM_W - halfW) * CAM_H;
+
+    for (var y = 0; y < CAM_H; y++) {
+      for (var x = 0; x < CAM_W; x++) {
+        var i = (y * CAM_W + x) * 4;
+        var dr = Math.abs(curr[i] - prev[i]);
+        var dg = Math.abs(curr[i + 1] - prev[i + 1]);
+        var db = Math.abs(curr[i + 2] - prev[i + 2]);
+        if ((dr + dg + db) / 3 > PIXEL_DIFF_THRESHOLD) {
+          if (x < halfW) {
+            leftChanged++;
+          } else {
+            rightChanged++;
+          }
+        }
+      }
+    }
+
+    prevFrameData = currentData;
+
+    // Mirror mapping: raw left = user's right, raw right = user's left
+    var rawLeftPct = (leftChanged / leftTotal) * 100;
+    var rawRightPct = (rightChanged / rightTotal) * 100;
+    leftMotion = rawRightPct;   // user's LEFT
+    rightMotion = rawLeftPct;   // user's RIGHT
+
+    // Update UI bars
+    var lPct = Math.min(100, leftMotion).toFixed(0);
+    var rPct = Math.min(100, rightMotion).toFixed(0);
+    barLeft.style.width = lPct + '%';
+    barRight.style.width = rPct + '%';
+    barValLeft.textContent = lPct;
+    barValRight.textContent = rPct;
+
+    // Direction indicator
+    if (leftMotion < 1 && rightMotion < 1) {
+      dirArrow.className = 'direction-arrow';
+      dirArrow.innerHTML = '&#9632;';
+      dirLabel.textContent = '-';
+    } else if (leftMotion > rightMotion) {
+      dirArrow.className = 'direction-arrow go-left';
+      dirArrow.innerHTML = '&#9654;';
+      dirLabel.textContent = 'KIRI';
+    } else {
+      dirArrow.className = 'direction-arrow go-right';
+      dirArrow.innerHTML = '&#9654;';
+      dirLabel.textContent = 'KANAN';
+    }
+
+    // Accumulate vote frames during repeating phase
+    if (phase === 'repeating' && !voteRegistered) {
+      voteFrames.push({ left: leftMotion, right: rightMotion, time: Date.now() });
+
+      // Only keep frames within the vote window
+      var now = Date.now();
+      while (voteFrames.length > 0 && now - voteFrames[0].time > VOTE_WINDOW_MS) {
+        voteFrames.shift();
+      }
+
+      // Check if we have enough frames and cooldown passed
+      if (now - lastStepTime >= STEP_COOLDOWN_MS && voteFrames.length >= 3) {
+        // Average the motion over the window
+        var avgLeft = 0, avgRight = 0;
+        for (var v = 0; v < voteFrames.length; v++) {
+          avgLeft += voteFrames[v].left;
+          avgRight += voteFrames[v].right;
+        }
+        avgLeft /= voteFrames.length;
+        avgRight /= voteFrames.length;
+
+        // Check for a decisive vote
+        var vote = null;
+        if (avgLeft >= sensitivity && avgLeft >= avgRight * VOTE_RATIO) {
+          vote = 'left';
+        } else if (avgRight >= sensitivity && avgRight >= avgLeft * VOTE_RATIO) {
+          vote = 'right';
+        }
+
+        if (vote) {
+          voteRegistered = true;
+          voteFrames = [];
+          processVote(vote);
+        }
+      }
+    }
+  }
+
+  // ============ VOTE PROCESSING ============
+  function processVote(vote) {
+    if (phase !== 'repeating') return;
+    clearTimeout(stepTimeoutId);
+
+    var expected = sequence[currentStep];
+    if (vote === expected) {
+      // Correct
+      showFeedback('correct');
+      playCorrectDing();
+      updateStepDot(currentStep, 'correct');
+      currentStep++;
+
+      if (currentStep >= sequence.length) {
+        // Round complete
+        phase = 'roundComplete';
+        phaseTimeout = setTimeout(finishRound, 1200);
+      } else {
+        // Next step after cooldown
+        phase = 'feedback';
+        phaseTimeout = setTimeout(function() {
+          phase = 'repeating';
+          voteRegistered = false;
+          lastStepTime = Date.now();
+          voteFrames = [];
+          showRepeatStep();
+          startStepTimeout();
+        }, STEP_COOLDOWN_MS);
+      }
+    } else {
+      // Wrong
+      showFeedback('wrong');
+      playWrongBuzzer();
+      updateStepDot(currentStep, 'wrong');
+      lives--;
+      updateLives();
+      currentStep++;
+
+      if (lives <= 0) {
+        phase = 'gameOver';
+        phaseTimeout = setTimeout(showGameOver, 1200);
+      } else if (currentStep >= sequence.length) {
+        phase = 'roundComplete';
+        phaseTimeout = setTimeout(finishRound, 1200);
+      } else {
+        phase = 'feedback';
+        phaseTimeout = setTimeout(function() {
+          phase = 'repeating';
+          voteRegistered = false;
+          lastStepTime = Date.now();
+          voteFrames = [];
+          showRepeatStep();
+          startStepTimeout();
+        }, STEP_COOLDOWN_MS);
+      }
+    }
+  }
+
+  function startStepTimeout() {
+    clearTimeout(stepTimeoutId);
+    stepTimeoutId = setTimeout(function() {
+      if (phase !== 'repeating') return;
+      // Timeout = wrong answer
+      voteRegistered = true;
+      processVote(sequence[currentStep] === 'left' ? 'right' : 'left'); // force wrong
+    }, STEP_TIMEOUT_MS);
+  }
+
+  // ============ UI HELPERS ============
+  function updateLives() {
+    var html = '';
+    for (var i = 0; i < MAX_LIVES; i++) {
+      html += i < lives ? '\u2764\uFE0F' : '\uD83D\uDDA4';
+    }
+    livesDisplay.innerHTML = html;
+  }
+
+  function showFeedback(type) {
+    feedbackFlash.className = 'feedback-flash ' + type;
+    setTimeout(function() {
+      feedbackFlash.className = 'feedback-flash';
+    }, 500);
+  }
+
+  function buildStepDots() {
+    stepTracker.innerHTML = '';
+    for (var i = 0; i < sequence.length; i++) {
+      var dot = document.createElement('div');
+      dot.className = 'step-dot';
+      dot.id = 'dot-' + i;
+      stepTracker.appendChild(dot);
+    }
+  }
+
+  function updateStepDot(index, state) {
+    var dot = document.getElementById('dot-' + index);
+    if (dot) dot.className = 'step-dot ' + state;
+  }
+
+  function highlightCurrentDot() {
+    // Remove current from all, add to currentStep
+    var dots = stepTracker.querySelectorAll('.step-dot');
+    for (var i = 0; i < dots.length; i++) {
+      if (dots[i].className === 'step-dot current') {
+        dots[i].className = 'step-dot';
+      }
+    }
+    var dot = document.getElementById('dot-' + currentStep);
+    if (dot && dot.className === 'step-dot') {
+      dot.className = 'step-dot current';
+    }
+  }
+
+  function getArrowSpeed() {
+    var speed = BASE_ARROW_SPEED * Math.pow(SPEED_DECAY, round - 1);
+    return Math.max(MIN_ARROW_SPEED, speed);
+  }
+
+  function getSequenceLength() {
+    return round + 1; // round 1 = 2 steps, round 2 = 3, etc.
+  }
+
+  // ============ GAME FLOW ============
+  window.startGame = async function() {
+    if (phase !== 'idle' && phase !== 'gameOver') return;
+    btnStart.disabled = true;
+
+    if (!camStream) {
+      var ok = await initCamera();
+      if (!ok) { btnStart.disabled = false; return; }
+    }
+
+    ensureAudio();
+
+    // Reset state
+    round = 0;
+    lives = MAX_LIVES;
+    sequence = [];
+    currentStep = 0;
+    updateLives();
+    roundDisplay.textContent = '-';
+    stepTracker.innerHTML = '';
+    feedbackFlash.className = 'feedback-flash';
+
+    startDetection();
+    startCountdown(3);
+  };
+
+  window.resetGame = function() {
+    clearAllTimers();
+    stopDetection();
+    phase = 'idle';
+    round = 0;
+    lives = MAX_LIVES;
+    sequence = [];
+    currentStep = 0;
+    updateLives();
+    roundDisplay.textContent = '-';
+    stepTracker.innerHTML = '';
+    feedbackFlash.className = 'feedback-flash';
+    statusBanner.className = 'status-banner';
+    statusBanner.textContent = 'Tekan "Mulai" untuk bermain';
+    displayContent.innerHTML = '<div style="text-align:center;color:#666;font-size:1.2em">Siap bermain?</div>';
+    btnStart.disabled = false;
+    barLeft.style.width = '0%';
+    barRight.style.width = '0%';
+    barValLeft.textContent = '0';
+    barValRight.textContent = '0';
+    dirArrow.className = 'direction-arrow';
+    dirArrow.innerHTML = '&#9632;';
+    dirLabel.textContent = '-';
+    document.querySelectorAll('.confetti-piece').forEach(function(p) { p.remove(); });
+  };
+
+  function clearAllTimers() {
+    clearTimeout(phaseTimeout);
+    clearTimeout(stepTimeoutId);
+  }
+
+  // ============ COUNTDOWN ============
+  function startCountdown(step) {
+    phase = 'countdown';
+    statusBanner.className = 'status-banner countdown-phase';
+    if (step > 0) {
+      statusBanner.textContent = step;
+      displayContent.innerHTML = '<div class="countdown-big">' + step + '</div>';
+      phaseTimeout = setTimeout(function() { startCountdown(step - 1); }, 800);
+    } else {
+      statusBanner.textContent = 'MULAI!';
+      displayContent.innerHTML = '<div class="countdown-big">GO!</div>';
+      phaseTimeout = setTimeout(startNewRound, 600);
+    }
+  }
+
+  // ============ ROUNDS ============
+  function startNewRound() {
+    round++;
+    roundDisplay.textContent = round;
+
+    // Build sequence: keep previous + add 1 new
+    var dirs = ['left', 'right'];
+    sequence.push(dirs[Math.floor(Math.random() * 2)]);
+
+    currentStep = 0;
+    buildStepDots();
+
+    // Show phase
+    showSequence();
+  }
+
+  function showSequence() {
+    phase = 'showing';
+    statusBanner.className = 'status-banner blue-phase';
+    statusBanner.textContent = 'Perhatikan urutan!';
+
+    var speed = getArrowSpeed();
+    var idx = 0;
+
+    function showNext() {
+      if (idx >= sequence.length) {
+        // Done showing, transition to repeat
+        phaseTimeout = setTimeout(startRepeatPhase, 600);
+        return;
+      }
+
+      var dir = sequence[idx];
+      var arrow = dir === 'left' ? '\u25C0' : '\u25B6';
+      var cls = dir === 'left' ? 'left' : 'right';
+
+      displayContent.innerHTML = '<div class="arrow-show ' + cls + '">' + arrow + '</div>';
+      // Highlight the step dot
+      var dot = document.getElementById('dot-' + idx);
+      if (dot) dot.className = 'step-dot current';
+
+      playArrowTone(dir);
+
+      idx++;
+      phaseTimeout = setTimeout(function() {
+        // Un-highlight dot
+        var prevDot = document.getElementById('dot-' + (idx - 1));
+        if (prevDot) prevDot.className = 'step-dot';
+        if (idx < sequence.length) {
+          // Brief blank between arrows
+          displayContent.innerHTML = '';
+          phaseTimeout = setTimeout(showNext, 150);
+        } else {
+          showNext();
+        }
+      }, speed);
+    }
+
+    showNext();
+  }
+
+  function startRepeatPhase() {
+    phase = 'readying';
+    statusBanner.className = 'status-banner gold-phase';
+    statusBanner.textContent = 'Giliran kalian!';
+    displayContent.innerHTML = '<div class="step-info"><div class="step-label">Bersiap...</div></div>';
+
+    // Reset dots
+    for (var i = 0; i < sequence.length; i++) {
+      var dot = document.getElementById('dot-' + i);
+      if (dot) dot.className = 'step-dot';
+    }
+
+    phaseTimeout = setTimeout(function() {
+      phase = 'repeating';
+      currentStep = 0;
+      voteRegistered = false;
+      lastStepTime = Date.now();
+      voteFrames = [];
+      showRepeatStep();
+      highlightCurrentDot();
+      startStepTimeout();
+    }, 1000);
+  }
+
+  function showRepeatStep() {
+    var expected = sequence[currentStep];
+    var arrow = expected === 'left' ? '\u25C0' : '\u25B6';
+    var dirText = expected === 'left' ? 'KIRI' : 'KANAN';
+    statusBanner.className = 'status-banner gold-phase';
+    statusBanner.textContent = 'Langkah ' + (currentStep + 1) + ' dari ' + sequence.length + ' \u2014 Bergerak ke ' + dirText + '!';
+    displayContent.innerHTML =
+      '<div class="step-info">' +
+        '<div class="step-label">Langkah ' + (currentStep + 1) + ' dari ' + sequence.length + '</div>' +
+        '<div class="step-waiting">Menunggu gerakan...</div>' +
+      '</div>';
+    highlightCurrentDot();
+  }
+
+  function finishRound() {
+    playRoundFanfare();
+    statusBanner.className = 'status-banner green-phase';
+    statusBanner.textContent = 'Ronde ' + round + ' selesai!';
+    displayContent.innerHTML =
+      '<div class="round-complete-text">' +
+        '<h2>Ronde ' + round + ' Selesai!</h2>' +
+        '<p>Urutan bertambah panjang...</p>' +
+      '</div>';
+
+    // Update high score
+    if (round > highScore) {
+      highScore = round;
+      localStorage.setItem(LS_KEY, highScore);
+      highScoreDisplay.textContent = highScore;
+    }
+
+    phaseTimeout = setTimeout(startNewRound, 2000);
+  }
+
+  function showGameOver() {
+    clearAllTimers();
+    stopDetection();
+    phase = 'gameOver';
+
+    playGameOverSound();
+
+    // Update high score
+    if (round > highScore) {
+      highScore = round;
+      localStorage.setItem(LS_KEY, highScore);
+      highScoreDisplay.textContent = highScore;
+    }
+
+    statusBanner.className = 'status-banner red-phase';
+    statusBanner.textContent = 'Game Over!';
+    displayContent.innerHTML =
+      '<div class="gameover-text">' +
+        '<h2>Game Over!</h2>' +
+        '<div class="score">Ronde tercapai: ' + round + '</div>' +
+        '<div class="sub">High Score: ' + highScore + '</div>' +
+      '</div>';
+
+    btnStart.disabled = false;
+
+    if (round >= 5) {
+      spawnConfetti();
+    }
+  }
+
+  function spawnConfetti() {
+    var colors = ['#FFD700','#4CAF50','#2196F3','#FF5722','#9C27B0','#FFC107','#E91E63'];
+    for (var i = 0; i < 50; i++) {
+      var piece = document.createElement('div');
+      piece.className = 'confetti-piece';
+      piece.style.left = Math.random() * 100 + 'vw';
+      piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+      piece.style.animationDelay = (Math.random() * 2) + 's';
+      piece.style.animationDuration = (2 + Math.random() * 2) + 's';
+      piece.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
+      document.body.appendChild(piece);
+      setTimeout(function() { piece.remove(); }, 5000);
+    }
+  }
+})();
+</script>
+
+</body>
+</html>
